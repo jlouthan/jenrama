@@ -8,6 +8,12 @@ package edu.princeton.sparrrow;
 
 public class Scheduler implements Runnable {
 
+    private ObjectOutputStream obj_o;
+
+    public Scheduler(ObjectOutputStream obj_o) {
+        this.obj_o = obj_o;
+    }
+
     public void run() {
         try {
             for (int i = 0; i < 4; i++) {
