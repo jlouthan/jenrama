@@ -1,0 +1,6 @@
+*.class
+.classpath
+.project
+sparrrow-app/target/
+*.swp
+*.pyc
