@@ -1,5 +1,7 @@
 package edu.princeton.sparrrow;
 
+import java.io.ObjectOutputStream;
+
 /**
  * The scheduler receives jobs from frontend instances and coordinates
  * between node monitors, placing probes and scheduling job tasks

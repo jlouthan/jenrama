@@ -1,5 +1,7 @@
 package edu.princeton.sparrrow;
 
+import java.io.ObjectInputStream;
+
 /**
  * A frontend submits jobs to schedulers and receive results in return.
  */
@@ -8,6 +10,10 @@ public class Frontend implements Runnable {
 
     ObjectInputStream obj_i;
 
+    public Frontend(ObjectInputStream obj_i){
+        this.obj_i= obj_i;
+    }
+
     public void run() {
         try {
             // Generate job to run
@@ -15,7 +21,6 @@ public class Frontend implements Runnable {
             // Send to scheduler, await result
 
             // Print result
-
 
             for (int i = 0; i < 4; i++) {
                 System.out.println("Frontend iteration " + i);
