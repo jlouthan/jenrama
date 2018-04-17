@@ -1,6 +1,6 @@
 package edu.princeton.sparrrow;
 
-import java.io.ObjectOutputStream;
+import java.io.*;
 
 /**
  * The scheduler receives jobs from frontend instances and coordinates
@@ -10,22 +10,44 @@ import java.io.ObjectOutputStream;
 
 public class Scheduler implements Runnable {
 
+    private PipedInputStream pipe_i;
+    private PipedOutputStream pipe_o;
+
+    private ObjectInputStream obj_i;
     private ObjectOutputStream obj_o;
 
-    public Scheduler(ObjectOutputStream obj_o) {
-        this.obj_o = obj_o;
+    public Scheduler(PipedInputStream pipe_i, PipedOutputStream pipe_o){
+        this.pipe_i = pipe_i;
+        this.pipe_o = pipe_o;
     }
 
     public void run() {
+        String newJob = "no job yet :(";
         try {
-            for (int i = 0; i < 4; i++) {
-                System.out.println("Scheduler iteration " + i);
+            this.obj_i = new ObjectInputStream(pipe_i);
+            newJob = (String) obj_i.readObject();
+
+            pipe_i.close();
+            pipe_o.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        System.out.println(newJob);
+
+
+        for (int i = 0; i < 2; i++) {
+            System.out.println("Scheduler iteration " + i);
+            try {
                 Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        } catch (InterruptedException e) {
-            System.out.println("Scheduler thread interrupted.");
         }
         System.out.println("Finishing scheduler.");
+
+
     }
 
 }

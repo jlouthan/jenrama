@@ -14,28 +14,22 @@ public class App {
         System.out.println("Starting Sparrrow App.");
 
         try{
+            // Initialize stream from Frontend to Scheduler
+            PipedOutputStream pipe_o_fe_sched = new PipedOutputStream();
+            PipedInputStream pipe_i_fe_sched = new PipedInputStream(pipe_o_fe_sched);
 
-            PipedOutputStream pipe_o = new PipedOutputStream();
-            PipedInputStream pipe_i = new PipedInputStream(pipe_o);
+            // Initialize stream from Scheduler to Frontend
+            PipedOutputStream pipe_o_sched_fe = new PipedOutputStream();
+            PipedInputStream pipe_i_sched_fe = new PipedInputStream(pipe_o_sched_fe);
 
-            ObjectOutputStream obj_o = new ObjectOutputStream(pipe_o);
-            ObjectInputStream obj_i = new ObjectInputStream(pipe_i);
-            
-            Scheduler sched = new Scheduler(obj_o);
-            Frontend f = new Frontend(obj_i);
-
-            System.out.println("A");
+            Frontend f = new Frontend(pipe_i_sched_fe, pipe_o_fe_sched);
+            Scheduler sched = new Scheduler(pipe_i_fe_sched, pipe_o_sched_fe);
 
             Thread schedulerThread = new Thread(sched, "sched");
-            schedulerThread.start();
-
-            System.out.println("B");
-
 
             Thread frontendThread = new Thread(f, "frontend");
             frontendThread.start();
-
-            System.out.println("C");
+            schedulerThread.start();
 
         } catch (IOException e){
             System.out.println("oops");
