@@ -26,7 +26,6 @@ public class App {
             Scheduler sched = new Scheduler(pipe_i_fe_sched, pipe_o_sched_fe);
 
             Thread schedulerThread = new Thread(sched, "sched");
-
             Thread frontendThread = new Thread(f, "frontend");
             frontendThread.start();
             schedulerThread.start();

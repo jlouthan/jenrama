@@ -25,10 +25,11 @@ public class Frontend implements Runnable {
 
             String job = "please run me :)";
 
+            Message m = new Message(MessageType.JOB_SPEC, job);
             // Send to scheduler, await result
             try {
                 this.obj_o = new ObjectOutputStream(pipe_o);
-                obj_o.writeObject(job);
+                obj_o.writeObject(m);
 
                 pipe_i.close();
                 pipe_o.close();

@@ -22,10 +22,18 @@ public class Scheduler implements Runnable {
     }
 
     public void run() {
-        String newJob = "no job yet :(";
+        String newJob = "unemployed";
         try {
             this.obj_i = new ObjectInputStream(pipe_i);
-            newJob = (String) obj_i.readObject();
+
+            // Receive job from Frontend
+            newJob = ((Message) obj_i.readObject()).getBody();
+
+            // switch(message.type
+
+            // Handle message
+
+
 
             pipe_i.close();
             pipe_o.close();
