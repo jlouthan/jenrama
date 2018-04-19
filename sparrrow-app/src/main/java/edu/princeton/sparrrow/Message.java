@@ -5,9 +5,9 @@ import java.io.Serializable;
 public class Message implements Serializable {
 
     private final MessageType type;
-    private final String body;
+    private final MessageContent body;
 
-    public Message(MessageType type, String body){
+    public Message(MessageType type, MessageContent body){
         this.type = type;
         this.body = body;
     }
@@ -15,7 +15,7 @@ public class Message implements Serializable {
     public MessageType getType() {
         return type;
     }
-    public String getBody() {
+    public MessageContent getBody() {
         return body;
     }
 
