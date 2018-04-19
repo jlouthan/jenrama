@@ -1,7 +1,5 @@
 package edu.princeton.sparrrow;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
-
 import java.io.*;
 
 /**
@@ -12,26 +10,26 @@ import java.io.*;
 public class NodeMonitor implements Runnable {
 
     // IO streams to and from Scheduler
-    private PipedInputStream pipe_from_sched;
-    private PipedOutputStream pipe_to_sched;
+    private PipedInputStream pipeFromSched;
+    private PipedOutputStream pipeToSched;
 
-    private ObjectInputStream obj_from_sched;
-    private ObjectOutputStream obj_to_sched;
+    private ObjectInputStream objFromSched;
+    private ObjectOutputStream objToSched;
 
     // IO streams to and from Executor
-    private PipedInputStream pipe_from_exec;
-    private PipedOutputStream pipe_to_exec;
+    private PipedInputStream pipeFromExec;
+    private PipedOutputStream pipeToExec;
 
-    private ObjectInputStream obj_from_exec;
-    private ObjectOutputStream obj_to_exec;
+    private ObjectInputStream objFromExec;
+    private ObjectOutputStream objToExec;
 
-    public NodeMonitor(PipedInputStream pipe_from_sched, PipedOutputStream pipe_to_sched,
-                     PipedInputStream pipe_from_exec, PipedOutputStream pipe_to_exec){
-        this.pipe_from_sched = pipe_from_sched;
-        this.pipe_to_sched = pipe_to_sched;
+    public NodeMonitor(PipedInputStream pipeFromSched, PipedOutputStream pipeToSched,
+                     PipedInputStream pipeFromExec, PipedOutputStream pipeToExec){
+        this.pipeFromSched = pipeFromSched;
+        this.pipeToSched = pipeToSched;
 
-        this.pipe_from_exec = pipe_from_exec;
-        this.pipe_to_exec = pipe_to_exec;
+        this.pipeFromExec = pipeFromExec;
+        this.pipeToExec = pipeToExec;
     }
 
     public void run() {
@@ -42,28 +40,28 @@ public class NodeMonitor implements Runnable {
             log("started");
 
             // Set up object IO with Scheduler
-            this.obj_to_sched = new ObjectOutputStream(pipe_to_sched);
-            this.obj_from_sched = new ObjectInputStream(pipe_from_sched);
+            this.objToSched = new ObjectOutputStream(pipeToSched);
+            this.objFromSched = new ObjectInputStream(pipeFromSched);
 
             // Set up object IO with Executor
-            this.obj_to_exec = new ObjectOutputStream(pipe_to_exec);
-            this.obj_from_exec = new ObjectInputStream(pipe_from_exec);
+            this.objToExec = new ObjectOutputStream(pipeToExec);
+            this.objFromExec = new ObjectInputStream(pipeFromExec);
 
             // Receive task specification from Scheduler
-            taskSpec = ((Message) obj_from_sched.readObject()).getBody();
+            taskSpec = ((Message) objFromSched.readObject()).getBody();
             // Handle message
             receivedSpec(taskSpec);
 
             // Receive task result from Executor
-            taskResult = ((Message) obj_from_exec.readObject()).getBody();
+            taskResult = ((Message) objFromExec.readObject()).getBody();
             // Handle message
             receivedResult(taskResult);
 
             // Close IO channels
-            pipe_from_exec.close();
-            pipe_to_exec.close();
-            pipe_from_sched.close();
-            pipe_to_sched.close();
+            pipeFromExec.close();
+            pipeToExec.close();
+            pipeFromSched.close();
+            pipeToSched.close();
 
             log("finishing");
         } catch (IOException e) {
@@ -87,14 +85,14 @@ public class NodeMonitor implements Runnable {
         // Send spec to executor for execution
         log("received task spec message from Scheduler, sending to Executor");
         Message m = new Message(MessageType.TASK_SPEC, s);
-        obj_to_exec.writeObject(m);
+        objToExec.writeObject(m);
     }
 
     private void receivedResult(String s) throws IOException{
         // Pass task result back to scheduler
         log("received result message from Executor, sending to Scheduler");
         Message m = new Message(MessageType.TASK_RESULT, s);
-        obj_to_sched.writeObject(m);
+        objToSched.writeObject(m);
     }
 
 }

@@ -10,26 +10,26 @@ import java.io.*;
 
 public class Scheduler implements Runnable {
     // IO streams to and from Frontend
-    private PipedInputStream pipe_from_fe;
-    private PipedOutputStream pipe_to_fe;
+    private PipedInputStream pipeFromFe;
+    private PipedOutputStream pipeToFe;
 
-    private ObjectInputStream obj_from_fe;
-    private ObjectOutputStream obj_to_fe;
+    private ObjectInputStream objFromFe;
+    private ObjectOutputStream objToFe;
 
     // IO streams to and from NodeMonitor
-    private PipedInputStream pipe_from_monitor;
-    private PipedOutputStream pipe_to_monitor;
+    private PipedInputStream pipeFromNodeMonitor;
+    private PipedOutputStream pipeToNodeMonitor;
 
-    private ObjectInputStream obj_from_monitor;
-    private ObjectOutputStream obj_to_monitor;
+    private ObjectInputStream objFromMonitor;
+    private ObjectOutputStream objToMonitor;
 
-    public Scheduler(PipedInputStream pipe_from_fe, PipedOutputStream pipe_to_fe,
-                     PipedInputStream pipe_from_monitor, PipedOutputStream pipe_to_monitor){
-        this.pipe_from_fe = pipe_from_fe;
-        this.pipe_to_fe = pipe_to_fe;
+    public Scheduler(PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
+                     PipedInputStream pipeFromNodeMonitor, PipedOutputStream pipeToNodeMonitor){
+        this.pipeFromFe = pipeFromFe;
+        this.pipeToFe = pipeToFe;
 
-        this.pipe_from_monitor = pipe_from_monitor;
-        this.pipe_to_monitor = pipe_to_monitor;
+        this.pipeFromNodeMonitor = pipeFromNodeMonitor;
+        this.pipeToNodeMonitor = pipeToNodeMonitor;
     }
 
     public void run() {
@@ -39,31 +39,31 @@ public class Scheduler implements Runnable {
         try {
 
             // Set up object IO with Frontend
-            this.obj_to_fe = new ObjectOutputStream(pipe_to_fe);
-            this.obj_from_fe = new ObjectInputStream(pipe_from_fe);
+            this.objToFe = new ObjectOutputStream(pipeToFe);
+            this.objFromFe = new ObjectInputStream(pipeFromFe);
 
 
             // Set up object IO with NodeMonitor
-            this.obj_to_monitor = new ObjectOutputStream(pipe_to_monitor);
-            this.obj_from_monitor = new ObjectInputStream(pipe_from_monitor);
+            this.objToMonitor = new ObjectOutputStream(pipeToNodeMonitor);
+            this.objFromMonitor = new ObjectInputStream(pipeFromNodeMonitor);
 
             log("started");
 
             // Receive job from Frontend
-            newJob = ((Message) obj_from_fe.readObject()).getBody();
+            newJob = ((Message) objFromFe.readObject()).getBody();
             // Handle message
             receivedJob(newJob);
 
             // Receive task result from NodeMonitor
-            taskResult = ((Message) obj_from_monitor.readObject()).getBody();
+            taskResult = ((Message) objFromMonitor.readObject()).getBody();
             // Handle message
             receivedResult(taskResult);
 
             // Close IO channels
-            pipe_from_fe.close();
-            pipe_to_fe.close();
-            pipe_to_monitor.close();
-            pipe_from_monitor.close();
+            pipeFromFe.close();
+            pipeToFe.close();
+            pipeToNodeMonitor.close();
+            pipeFromNodeMonitor.close();
 
             log("finishing");
         } catch (IOException e) {
@@ -85,7 +85,7 @@ public class Scheduler implements Runnable {
         // For now, just pass it along to the NodeMonitor
         log("received job spec from Frontend, sending task spec to NodeMonitor");
         Message spec = new Message(MessageType.TASK_SPEC, m);
-        obj_to_monitor.writeObject(spec);
+        objToMonitor.writeObject(spec);
     }
 
     private void receivedSpecRequest(String m) throws IOException{
@@ -98,6 +98,6 @@ public class Scheduler implements Runnable {
         // For now, just pass it back up to the Frontend
         log("received task result from NodeMonitor, sending job result to Frontend");
         Message reply = new Message(MessageType.JOB_RESULT, m);
-        obj_to_fe.writeObject(reply);
+        objToFe.writeObject(reply);
     }
 }
