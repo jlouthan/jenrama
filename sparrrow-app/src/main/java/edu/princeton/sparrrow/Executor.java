@@ -8,15 +8,15 @@ import java.io.*;
 
 public class Executor implements Runnable {
     // IO streams to and from NodeMonitor
-    private PipedInputStream pipe_from_monitor;
-    private PipedOutputStream pipe_to_monitor;
+    private PipedInputStream pipeFromMonitor;
+    private PipedOutputStream pipeToMonitor;
 
-    private ObjectInputStream obj_from_monitor;
-    private ObjectOutputStream obj_to_monitor;
+    private ObjectInputStream objFromMonitor;
+    private ObjectOutputStream objToMonitor;
 
-    public Executor(PipedInputStream pipe_from_monitor, PipedOutputStream pipe_to_monitor){
-        this.pipe_from_monitor = pipe_from_monitor;
-        this.pipe_to_monitor = pipe_to_monitor;
+    public Executor(PipedInputStream pipeFromMonitor, PipedOutputStream pipeToMonitor){
+        this.pipeFromMonitor = pipeFromMonitor;
+        this.pipeToMonitor = pipeToMonitor;
     }
 
     public void run() {
@@ -27,19 +27,19 @@ public class Executor implements Runnable {
             log("started");
 
             // Set up object IO with Scheduler
-            this.obj_to_monitor = new ObjectOutputStream(pipe_to_monitor);
-            this.obj_from_monitor = new ObjectInputStream(pipe_from_monitor);
+            this.objToMonitor = new ObjectOutputStream(pipeToMonitor);
+            this.objFromMonitor = new ObjectInputStream(pipeFromMonitor);
 
             // Receive task specification from Scheduler
-            taskSpec = ((Message) obj_from_monitor.readObject()).getBody();
+            taskSpec = ((Message) objFromMonitor.readObject()).getBody();
             // Execute task
             result = execute(taskSpec);
             // Return result
-            obj_to_monitor.writeObject(new Message(MessageType.TASK_RESULT, result));
+            objToMonitor.writeObject(new Message(MessageType.TASK_RESULT, result));
 
             // Close IO channels
-            pipe_from_monitor.close();
-            pipe_to_monitor.close();
+            pipeFromMonitor.close();
+            pipeToMonitor.close();
 
             log("finishing");
         } catch (IOException e) {

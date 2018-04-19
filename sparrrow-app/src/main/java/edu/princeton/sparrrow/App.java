@@ -15,35 +15,35 @@ public class App {
 
         try{
             // Initialize streams between Frontend and Scheduler
-            PipedOutputStream pipe_o_fe_sched = new PipedOutputStream();
-            PipedInputStream pipe_i_fe_sched = new PipedInputStream(pipe_o_fe_sched);
+            PipedOutputStream pipeOutFeSched = new PipedOutputStream();
+            PipedInputStream pipeInFeSched = new PipedInputStream(pipeOutFeSched);
 
-            PipedOutputStream pipe_o_sched_fe = new PipedOutputStream();
-            PipedInputStream pipe_i_sched_fe = new PipedInputStream(pipe_o_sched_fe);
+            PipedOutputStream pipeOutSchedFe = new PipedOutputStream();
+            PipedInputStream pipeInSchedFe = new PipedInputStream(pipeOutSchedFe);
 
             // Initialize streams between Scheduler and NodeMonitor
-            PipedOutputStream pipe_o_sched_monitor = new PipedOutputStream();
-            PipedInputStream pipe_i_sched_monitor = new PipedInputStream(pipe_o_sched_monitor);
+            PipedOutputStream pipeOutSchedMonitor = new PipedOutputStream();
+            PipedInputStream pipeInSchedMonitor = new PipedInputStream(pipeOutSchedMonitor);
 
-            PipedOutputStream pipe_o_monitor_sched = new PipedOutputStream();
-            PipedInputStream pipe_i_monitor_sched = new PipedInputStream(pipe_o_monitor_sched);
+            PipedOutputStream pipeOutMonitorSched = new PipedOutputStream();
+            PipedInputStream pipeInMonitorSched = new PipedInputStream(pipeOutMonitorSched);
 
             // Initialize streams betwee NodeMonitor and Executor
-            PipedOutputStream pipe_o_monitor_exec = new PipedOutputStream();
-            PipedInputStream pipe_i_monitor_exec = new PipedInputStream(pipe_o_monitor_exec);
+            PipedOutputStream pipeOutMonitorExec = new PipedOutputStream();
+            PipedInputStream pipeInMonitorExec = new PipedInputStream(pipeOutMonitorExec);
 
             // Initialize streams between Executor and NodeMonitor
-            PipedOutputStream pipe_o_exec_monitor = new PipedOutputStream();
-            PipedInputStream pipe_i_exec_monitor = new PipedInputStream(pipe_o_exec_monitor);
+            PipedOutputStream pipeOutExecMonitor = new PipedOutputStream();
+            PipedInputStream pipeInExecMonitor = new PipedInputStream(pipeOutExecMonitor);
 
 
             // Initialize our actors - Frontend, Scheduler, NodeMonitor, and Executor
-            Frontend f = new Frontend(pipe_i_sched_fe, pipe_o_fe_sched);
-            Scheduler sched = new Scheduler(pipe_i_fe_sched, pipe_o_sched_fe,
-                    pipe_i_monitor_sched, pipe_o_sched_monitor);
-            NodeMonitor monitor = new NodeMonitor(pipe_i_sched_monitor, pipe_o_monitor_sched,
-                    pipe_i_exec_monitor, pipe_o_monitor_exec);
-            Executor exec = new Executor(pipe_i_monitor_exec, pipe_o_exec_monitor);
+            Frontend f = new Frontend(pipeInSchedFe, pipeOutFeSched);
+            Scheduler sched = new Scheduler(pipeInFeSched, pipeOutSchedFe,
+                    pipeInMonitorSched, pipeOutSchedMonitor);
+            NodeMonitor monitor = new NodeMonitor(pipeInSchedMonitor, pipeOutMonitorSched,
+                    pipeInExecMonitor, pipeOutMonitorExec);
+            Executor exec = new Executor(pipeInMonitorExec, pipeOutExecMonitor);
 
             Thread schedulerThread = new Thread(sched, "sched");
             Thread frontendThread = new Thread(f, "frontend");

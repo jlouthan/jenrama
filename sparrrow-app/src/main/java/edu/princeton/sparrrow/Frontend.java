@@ -8,15 +8,15 @@ import java.io.*;
 
 public class Frontend implements Runnable {
 
-    private PipedInputStream pipe_from_sched;
-    private PipedOutputStream pipe_to_sched;
+    private PipedInputStream pipeFromSched;
+    private PipedOutputStream pipeToSched;
 
-    private ObjectInputStream obj_from_sched;
-    private ObjectOutputStream obj_to_sched;
+    private ObjectInputStream objFromSched;
+    private ObjectOutputStream objToSched;
 
-    public Frontend(PipedInputStream pipe_from_sched, PipedOutputStream pipe_to_sched){
-        this.pipe_from_sched = pipe_from_sched;
-        this.pipe_to_sched = pipe_to_sched;
+    public Frontend(PipedInputStream pipeFromSched, PipedOutputStream pipeToSched){
+        this.pipeFromSched = pipeFromSched;
+        this.pipeToSched = pipeToSched;
     }
 
     public void run() {
@@ -24,23 +24,23 @@ public class Frontend implements Runnable {
         String job = "please run me :)";
         try {
             // Set up IO streams with Scheduler
-            this.obj_to_sched = new ObjectOutputStream(pipe_to_sched);
-            this.obj_from_sched = new ObjectInputStream(pipe_from_sched);
+            this.objToSched = new ObjectOutputStream(pipeToSched);
+            this.objFromSched = new ObjectInputStream(pipeFromSched);
 
             log("started");
 
             // Send job specification to scheduler, await result
             Message m = new Message(MessageType.JOB_SPEC, job);
             log("sending job spec to scheduler");
-            obj_to_sched.writeObject(m);
-            obj_to_sched.flush();
+            objToSched.writeObject(m);
+            objToSched.flush();
 
             // Print result
-            result = ((Message) obj_from_sched.readObject()).getBody();
+            result = ((Message) objFromSched.readObject()).getBody();
             log("received result: " + result);
 
-            pipe_from_sched.close();
-            pipe_to_sched.close();
+            pipeFromSched.close();
+            pipeToSched.close();
             log("finishing");
         } catch (IOException e) {
             e.printStackTrace();
