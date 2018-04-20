@@ -7,9 +7,9 @@ import org.json.JSONObject;
 public class JobSpecContent extends MessageContent {
     private final UUID jobID;
     private final int frontendID;
-    private final Collection<JSONObject> tasks;
+    private final Collection<String> tasks;
 
-    public JobSpecContent(UUID jobID, int frontendID, Collection<JSONObject> tasks){
+    public JobSpecContent(UUID jobID, int frontendID, Collection<String> tasks){
         this.jobID = jobID;
         this.frontendID = frontendID;
         this.tasks = tasks;
@@ -23,7 +23,7 @@ public class JobSpecContent extends MessageContent {
         return frontendID;
     }
 
-    public Collection<JSONObject> getTasks() {
+    public Collection<String> getTasks() {
         return tasks;
     }
 }

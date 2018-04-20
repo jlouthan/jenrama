@@ -8,6 +8,7 @@ import java.io.*;
  */
 
 public class NodeMonitor implements Runnable {
+    private final int id;
 
     // IO streams to and from Scheduler
     private PipedInputStream pipeFromSched;
@@ -23,8 +24,10 @@ public class NodeMonitor implements Runnable {
     private ObjectInputStream objFromExec;
     private ObjectOutputStream objToExec;
 
-    public NodeMonitor(PipedInputStream pipeFromSched, PipedOutputStream pipeToSched,
+    public NodeMonitor(int id, PipedInputStream pipeFromSched, PipedOutputStream pipeToSched,
                      PipedInputStream pipeFromExec, PipedOutputStream pipeToExec){
+        this.id = id;
+
         this.pipeFromSched = pipeFromSched;
         this.pipeToSched = pipeToSched;
 

@@ -6,9 +6,9 @@ import org.json.JSONObject;
 
 public class JobResultContent extends MessageContent {
     private final UUID jobID;
-    private final Collection<JSONObject> results;
+    private final Collection<String> results;
 
-    public JobResultContent(UUID jobID, Collection<JSONObject> results){
+    public JobResultContent(UUID jobID, Collection<String> results){
         this.jobID = jobID;
         this.results = results;
     }
@@ -17,7 +17,7 @@ public class JobResultContent extends MessageContent {
         return jobID;
     }
 
-    public Collection<JSONObject> getResults() {
+    public Collection<String> getResults() {
         return results;
     }
 }

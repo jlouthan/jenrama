@@ -1,6 +1,10 @@
 package edu.princeton.sparrrow;
 
+import org.json.JSONObject;
+
 import java.io.*;
+import java.util.ArrayList;
+import java.util.UUID;
 
 
 /**
@@ -10,6 +14,8 @@ import java.io.*;
  */
 
 public class Scheduler implements Runnable {
+    private final int id;
+
     // IO streams to and from Frontend
     private PipedInputStream pipeFromFe;
     private PipedOutputStream pipeToFe;
@@ -24,8 +30,10 @@ public class Scheduler implements Runnable {
     private ObjectInputStream objFromMonitor;
     private ObjectOutputStream objToMonitor;
 
-    public Scheduler(PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
+    public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
                      PipedInputStream pipeFromNodeMonitor, PipedOutputStream pipeToNodeMonitor){
+        this.id = id;
+
         this.pipeFromFe = pipeFromFe;
         this.pipeToFe = pipeToFe;
 
@@ -86,7 +94,7 @@ public class Scheduler implements Runnable {
         // For now, just pass it along to the NodeMonitor
         log("received job spec from Frontend, sending task spec to NodeMonitor");
         // Create one task spec to pass to node monitor
-        TaskSpecContent taskSpec = new TaskSpecContent();
+        TaskSpecContent taskSpec = new TaskSpecContent(m.getJobID(), UUID.randomUUID(), this.id, m.getTasks().iterator().next());
         Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
         objToMonitor.writeObject(spec);
     }
@@ -100,7 +108,11 @@ public class Scheduler implements Runnable {
 
         // For now, just pass it back up to the Frontend
         log("received task result from NodeMonitor, sending job result to Frontend");
-        Message reply = new Message(MessageType.JOB_RESULT, m);
+        ArrayList<String> results = new ArrayList<String>();
+        results.add(m.getResult());
+        JobResultContent newMessage = new JobResultContent(m.getJobID(), results);
+
+        Message reply = new Message(MessageType.JOB_RESULT, newMessage);
         objToFe.writeObject(reply);
     }
 }

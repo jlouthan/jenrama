@@ -7,9 +7,9 @@ public class TaskSpecContent extends MessageContent {
     private final UUID jobID;
     private final UUID taskID;
     private final int schedID;
-    private final JSONObject spec;
+    private final String spec;
 
-    public TaskSpecContent(UUID jobID, UUID taskID, int schedID, JSONObject spec){
+    public TaskSpecContent(UUID jobID, UUID taskID, int schedID, String spec){
         this.jobID = jobID;
         this.taskID = taskID;
         this.schedID = schedID;
@@ -28,7 +28,7 @@ public class TaskSpecContent extends MessageContent {
         return schedID;
     }
 
-    public JSONObject getSpec() {
+    public String getSpec() {
         return spec;
     }
 }

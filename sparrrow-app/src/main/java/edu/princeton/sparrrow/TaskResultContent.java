@@ -7,9 +7,9 @@ public class TaskResultContent extends MessageContent {
     private final UUID jobID;
     private final UUID taskID;
     private final int schedID;
-    private final JSONObject result;
+    private final String result;
 
-    public TaskResultContent(UUID jobID, UUID taskID, int schedID, JSONObject result){
+    public TaskResultContent(UUID jobID, UUID taskID, int schedID, String result){
         this.jobID = jobID;
         this.taskID = taskID;
         this.schedID = schedID;
@@ -28,7 +28,7 @@ public class TaskResultContent extends MessageContent {
         return schedID;
     }
 
-    public JSONObject getResult() {
+    public String getResult() {
         return result;
     }
 }

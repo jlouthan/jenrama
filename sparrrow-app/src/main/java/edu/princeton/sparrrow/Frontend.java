@@ -1,6 +1,10 @@
 package edu.princeton.sparrrow;
 
+import org.json.JSONObject;
+
 import java.io.*;
+import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * A frontend submits jobs to schedulers and receive results in return.
@@ -8,27 +12,32 @@ import java.io.*;
 
 public class Frontend implements Runnable {
 
+    private final int id;
+
     private PipedInputStream pipeFromSched;
     private PipedOutputStream pipeToSched;
 
     private ObjectInputStream objFromSched;
     private ObjectOutputStream objToSched;
 
-    public Frontend(PipedInputStream pipeFromSched, PipedOutputStream pipeToSched){
+    public Frontend(int id, PipedInputStream pipeFromSched, PipedOutputStream pipeToSched){
+        this.id = id;
         this.pipeFromSched = pipeFromSched;
         this.pipeToSched = pipeToSched;
     }
 
     public void run() {
-        JobResultContent result = new JobResultContent();
-        JobSpecContent job = new JobSpecContent();
-
         try {
             // Set up IO streams with Scheduler
             this.objToSched = new ObjectOutputStream(pipeToSched);
             this.objFromSched = new ObjectInputStream(pipeFromSched);
 
             log("started");
+
+            // Construct job
+            ArrayList<String> tasks = new ArrayList<String>();
+            tasks.add("");
+            JobSpecContent job = new JobSpecContent(UUID.randomUUID(), this.id, tasks);
 
             // Send job specification to scheduler, await result
             Message m = new Message(MessageType.JOB_SPEC, job);
@@ -37,8 +46,8 @@ public class Frontend implements Runnable {
             objToSched.flush();
 
             // Print result
-            result = (JobResultContent)((Message) objFromSched.readObject()).getBody();
-            log("received result: " + result);
+            JobResultContent resultContent = (JobResultContent)((Message) objFromSched.readObject()).getBody();
+            log("received results from " + resultContent.getResults().size() + " tasks");
 
             pipeFromSched.close();
             pipeToSched.close();

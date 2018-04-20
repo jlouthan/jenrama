@@ -38,12 +38,12 @@ public class App {
 
 
             // Initialize our actors - Frontend, Scheduler, NodeMonitor, and Executor
-            Frontend f = new Frontend(pipeInSchedFe, pipeOutFeSched);
-            Scheduler sched = new Scheduler(pipeInFeSched, pipeOutSchedFe,
+            Frontend f = new Frontend(0, pipeInSchedFe, pipeOutFeSched);
+            Scheduler sched = new Scheduler(0, pipeInFeSched, pipeOutSchedFe,
                     pipeInMonitorSched, pipeOutSchedMonitor);
-            NodeMonitor monitor = new NodeMonitor(pipeInSchedMonitor, pipeOutMonitorSched,
+            NodeMonitor monitor = new NodeMonitor(0, pipeInSchedMonitor, pipeOutMonitorSched,
                     pipeInExecMonitor, pipeOutMonitorExec);
-            Executor exec = new Executor(pipeInMonitorExec, pipeOutExecMonitor);
+            Executor exec = new Executor(0, pipeInMonitorExec, pipeOutExecMonitor);
 
             Thread schedulerThread = new Thread(sched, "sched");
             Thread frontendThread = new Thread(f, "frontend");

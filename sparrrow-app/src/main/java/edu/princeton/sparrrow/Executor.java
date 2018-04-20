@@ -1,6 +1,8 @@
 package edu.princeton.sparrrow;
 
 import java.io.*;
+import java.util.ArrayList;
+
 import org.json.JSONObject;
 
 
@@ -9,6 +11,8 @@ import org.json.JSONObject;
  */
 
 public class Executor implements Runnable {
+    private final int id;
+
     // IO streams to and from NodeMonitor
     private PipedInputStream pipeFromMonitor;
     private PipedOutputStream pipeToMonitor;
@@ -16,7 +20,8 @@ public class Executor implements Runnable {
     private ObjectInputStream objFromMonitor;
     private ObjectOutputStream objToMonitor;
 
-    public Executor(PipedInputStream pipeFromMonitor, PipedOutputStream pipeToMonitor){
+    public Executor(int id, PipedInputStream pipeFromMonitor, PipedOutputStream pipeToMonitor){
+        this.id = id;
         this.pipeFromMonitor = pipeFromMonitor;
         this.pipeToMonitor = pipeToMonitor;
     }
@@ -69,7 +74,8 @@ public class Executor implements Runnable {
         }
 
         log("finished execution, returning result");
-        // return "Execution result for task: " + s;
-        return new TaskResultContent();
+        TaskResultContent myResult = new TaskResultContent(s.getJobID(), s.getTaskID(), s.getSchedID(), "result");
+
+        return myResult;
     }
 }
