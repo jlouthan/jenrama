@@ -33,8 +33,8 @@ public class NodeMonitor implements Runnable {
     }
 
     public void run() {
-        String taskSpec;
-        String taskResult;
+        TaskSpecContent taskSpec;
+        TaskResultContent taskResult;
 
         try {
             log("started");
@@ -48,12 +48,12 @@ public class NodeMonitor implements Runnable {
             this.objFromExec = new ObjectInputStream(pipeFromExec);
 
             // Receive task specification from Scheduler
-            taskSpec = ((Message) objFromSched.readObject()).getBody();
+            taskSpec = (TaskSpecContent)((Message) objFromSched.readObject()).getBody();
             // Handle message
             receivedSpec(taskSpec);
 
             // Receive task result from Executor
-            taskResult = ((Message) objFromExec.readObject()).getBody();
+            taskResult = (TaskResultContent)((Message) objFromExec.readObject()).getBody();
             // Handle message
             receivedResult(taskResult);
 
@@ -81,14 +81,14 @@ public class NodeMonitor implements Runnable {
         // TODO: add reservation to queue (with enough info to request spec from Scheduler later)
     }
 
-    private void receivedSpec(String s) throws IOException{
+    private void receivedSpec(TaskSpecContent s) throws IOException{
         // Send spec to executor for execution
         log("received task spec message from Scheduler, sending to Executor");
         Message m = new Message(MessageType.TASK_SPEC, s);
         objToExec.writeObject(m);
     }
 
-    private void receivedResult(String s) throws IOException{
+    private void receivedResult(TaskResultContent s) throws IOException{
         // Pass task result back to scheduler
         log("received result message from Executor, sending to Scheduler");
         Message m = new Message(MessageType.TASK_RESULT, s);

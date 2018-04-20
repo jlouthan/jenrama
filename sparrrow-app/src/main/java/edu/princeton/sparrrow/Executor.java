@@ -1,6 +1,8 @@
 package edu.princeton.sparrrow;
 
 import java.io.*;
+import org.json.JSONObject;
+
 
 /**
  * The executor receives a job task from a node monitor, executes it, and returns the results.
@@ -20,8 +22,8 @@ public class Executor implements Runnable {
     }
 
     public void run() {
-        String taskSpec;
-        String result;
+        TaskSpecContent taskSpec;
+        TaskResultContent result;
 
         try {
             log("started");
@@ -31,7 +33,7 @@ public class Executor implements Runnable {
             this.objFromMonitor = new ObjectInputStream(pipeFromMonitor);
 
             // Receive task specification from Scheduler
-            taskSpec = ((Message) objFromMonitor.readObject()).getBody();
+            taskSpec = (TaskSpecContent)((Message) objFromMonitor.readObject()).getBody();
             // Execute task
             result = execute(taskSpec);
             // Return result
@@ -53,7 +55,7 @@ public class Executor implements Runnable {
         System.out.println("Executor: " + text);
     }
 
-    private String execute(String s){
+    private TaskResultContent execute(TaskSpecContent s){
         // TODO: figure out how to inherit this class for arbitrary implementations of execute
 
         log("received task spec from NodeMonitor, beginning execution");
@@ -67,6 +69,7 @@ public class Executor implements Runnable {
         }
 
         log("finished execution, returning result");
-        return "Execution result for task: " + s;
+        // return "Execution result for task: " + s;
+        return new TaskResultContent();
     }
 }

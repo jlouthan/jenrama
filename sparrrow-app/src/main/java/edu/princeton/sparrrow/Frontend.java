@@ -20,8 +20,9 @@ public class Frontend implements Runnable {
     }
 
     public void run() {
-        String result = "no result";
-        String job = "please run me :)";
+        JobResultContent result = new JobResultContent();
+        JobSpecContent job = new JobSpecContent();
+
         try {
             // Set up IO streams with Scheduler
             this.objToSched = new ObjectOutputStream(pipeToSched);
@@ -36,7 +37,7 @@ public class Frontend implements Runnable {
             objToSched.flush();
 
             // Print result
-            result = ((Message) objFromSched.readObject()).getBody();
+            result = (JobResultContent)((Message) objFromSched.readObject()).getBody();
             log("received result: " + result);
 
             pipeFromSched.close();

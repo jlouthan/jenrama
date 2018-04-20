@@ -2,6 +2,7 @@ package edu.princeton.sparrrow;
 
 import java.io.*;
 
+
 /**
  * The scheduler receives jobs from frontend instances and coordinates
  * between node monitors, placing probes and scheduling job tasks
@@ -33,8 +34,8 @@ public class Scheduler implements Runnable {
     }
 
     public void run() {
-        String newJob;
-        String taskResult;
+        JobSpecContent newJob;
+        TaskResultContent taskResult;
 
         try {
 
@@ -50,12 +51,12 @@ public class Scheduler implements Runnable {
             log("started");
 
             // Receive job from Frontend
-            newJob = ((Message) objFromFe.readObject()).getBody();
+            newJob = (JobSpecContent)((Message) objFromFe.readObject()).getBody();
             // Handle message
             receivedJob(newJob);
 
             // Receive task result from NodeMonitor
-            taskResult = ((Message) objFromMonitor.readObject()).getBody();
+            taskResult = (TaskResultContent)((Message) objFromMonitor.readObject()).getBody();
             // Handle message
             receivedResult(taskResult);
 
@@ -77,14 +78,16 @@ public class Scheduler implements Runnable {
         System.out.println("Scheduler: " + text);
     }
 
-    private void receivedJob(String m) throws IOException{
+    private void receivedJob(JobSpecContent m) throws IOException{
         //TODO: Store some state about the job
 
         //TODO: Send reservations to node monitors
 
         // For now, just pass it along to the NodeMonitor
         log("received job spec from Frontend, sending task spec to NodeMonitor");
-        Message spec = new Message(MessageType.TASK_SPEC, m);
+        // Create one task spec to pass to node monitor
+        TaskSpecContent taskSpec = new TaskSpecContent();
+        Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
         objToMonitor.writeObject(spec);
     }
 
@@ -92,7 +95,7 @@ public class Scheduler implements Runnable {
         // TODO: reply to request with job specification
     }
 
-    private void receivedResult(String m) throws IOException{
+    private void receivedResult(TaskResultContent m) throws IOException{
         // TODO: collect task result, return if it's done
 
         // For now, just pass it back up to the Frontend
