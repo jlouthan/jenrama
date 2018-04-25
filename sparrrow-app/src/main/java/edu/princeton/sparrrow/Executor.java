@@ -11,7 +11,7 @@ import org.json.JSONObject;
  */
 
 public class Executor implements Runnable {
-    private final int id;
+    protected final int id;
 
     // IO streams to and from NodeMonitor
     private PipedInputStream pipeFromMonitor;
@@ -60,7 +60,7 @@ public class Executor implements Runnable {
         System.out.println("Executor: " + text);
     }
 
-    private TaskResultContent execute(TaskSpecContent s){
+    protected TaskResultContent execute(TaskSpecContent s){
         // TODO: figure out how to inherit this class for arbitrary implementations of execute
 
         log("received task spec from NodeMonitor, beginning execution");

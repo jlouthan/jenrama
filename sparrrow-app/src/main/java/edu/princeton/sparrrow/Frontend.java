@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class Frontend implements Runnable {
 
-    private final int id;
+    protected final int id;
 
     private PipedInputStream pipeFromSched;
     private PipedOutputStream pipeToSched;
@@ -34,20 +34,20 @@ public class Frontend implements Runnable {
 
             log("started");
 
-            // Construct job
-            ArrayList<String> tasks = new ArrayList<String>();
-            tasks.add("");
-            JobSpecContent job = new JobSpecContent(UUID.randomUUID(), this.id, tasks);
 
+            //TODO: put this in a loop to send multiple jobs
             // Send job specification to scheduler, await result
-            Message m = new Message(MessageType.JOB_SPEC, job);
+            Message m = new Message(MessageType.JOB_SPEC, makeJob());
+
             log("sending job spec to scheduler");
             objToSched.writeObject(m);
             objToSched.flush();
 
-            // Print result
+            //TODO: put this in a loop to await jobs (need to keep track of remaining jobs)
+            // Handle result
             JobResultContent resultContent = (JobResultContent)((Message) objFromSched.readObject()).getBody();
-            log("received results from " + resultContent.getResults().size() + " tasks");
+            handleResult(resultContent);
+
 
             pipeFromSched.close();
             pipeToSched.close();
@@ -59,7 +59,19 @@ public class Frontend implements Runnable {
         }
     }
 
-    private void log(String text){
+    protected void log(String text){
         System.out.println("Frontend: " + text);
     }
+
+    protected JobSpecContent makeJob(){
+        ArrayList<String> tasks = new ArrayList<String>();
+
+        JobSpecContent job = new JobSpecContent(UUID.randomUUID(), this.id, tasks);
+        return job;
+    }
+
+    protected void handleResult(JobResultContent jobResult){
+        log("received results from " + jobResult.getResults().size() + " tasks");
+    }
+
 }
