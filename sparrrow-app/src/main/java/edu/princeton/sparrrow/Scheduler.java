@@ -3,8 +3,8 @@ package edu.princeton.sparrrow;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -44,6 +44,7 @@ public class Scheduler implements Runnable {
     public void run() {
         JobSpecContent newJob;
         TaskResultContent taskResult;
+        ProbeReplyContent probeReply;
 
         try {
 
@@ -62,6 +63,11 @@ public class Scheduler implements Runnable {
             newJob = (JobSpecContent)((Message) objFromFe.readObject()).getBody();
             // Handle message
             receivedJob(newJob);
+
+            // Receive request for task spec from NodeMonitor
+            probeReply = (ProbeReplyContent) ((Message) objFromMonitor.readObject()).getBody();
+            // Handle message
+            receivedSpecRequest(probeReply);
 
             // Receive task result from NodeMonitor
             taskResult = (TaskResultContent)((Message) objFromMonitor.readObject()).getBody();
@@ -86,21 +92,60 @@ public class Scheduler implements Runnable {
         System.out.println("Scheduler: " + text);
     }
 
-    private void receivedJob(JobSpecContent m) throws IOException{
-        //TODO: Store some state about the job
+    //TODO move to its own class?
+    private class Job {
+        private int frontendId;
+        private LinkedList<String> tasksRemaining;
+        //TODO add tasksInFlight or something?? to track sent tasks that aren't yet completed?
+        private ArrayList<String> taskResults;
 
-        //TODO: Send reservations to node monitors
+        // Create a new job with no task results yet
+        public Job(int frontendId, Collection<String> tasksRemaining) {
+            this.frontendId = frontendId;
+            this.tasksRemaining = (LinkedList) tasksRemaining;
+            this.taskResults = new ArrayList<String>();
+        }
 
-        // For now, just pass it along to the NodeMonitor
-        log("received job spec from Frontend, sending task spec to NodeMonitor");
-        // Create one task spec to pass to node monitor
-        TaskSpecContent taskSpec = new TaskSpecContent(m.getJobID(), UUID.randomUUID(), this.id, m.getTasks().iterator().next());
-        Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
-        objToMonitor.writeObject(spec);
+        public String getNextTaskRemaining() {
+            if (tasksRemaining.isEmpty()) {
+                return null;
+            }
+            return tasksRemaining.removeFirst();
+        }
     }
 
-    private void receivedSpecRequest(String m) throws IOException{
-        // TODO: reply to request with job specification
+    // TODO move to top of class?
+    private ConcurrentHashMap<UUID, Job> jobs = new ConcurrentHashMap<>();
+
+    private void receivedJob(JobSpecContent m) throws IOException{
+        //TODO: Store some state about the job, including remaining tasks to schedule
+        Job j = new Job(m.getFrontendID(), m.getTasks());
+        jobs.put(m.getJobID(), j);
+
+        //TODO: Send reservations (probes) to node monitor
+        log("received job spec from Frontend, sending probe to NodeMonitor");
+        ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
+        Message probeMessage = new Message(MessageType.PROBE, probe);
+        objToMonitor.writeObject(probeMessage);
+
+        //TODO: Enable tracking multiple node monitor IDs and probing a subset of them;
+    }
+
+    private void receivedSpecRequest(ProbeReplyContent m) throws IOException{
+        log("received task spec request from NodeMonitor, sending task spec to NodeMonitor");
+
+        // Find the job containing the requested task spec
+        UUID jobId = m.getJobID();
+        String task = jobs.get(jobId).getNextTaskRemaining();
+
+        // If there are no more tasks for the job, ignore the request from the Node Monitor
+        if (task == null) {
+            return;
+        }
+        // Create one task spec to pass to node monitor
+        TaskSpecContent taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
+        Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
+        objToMonitor.writeObject(spec);
     }
 
     private void receivedResult(TaskResultContent m) throws IOException{

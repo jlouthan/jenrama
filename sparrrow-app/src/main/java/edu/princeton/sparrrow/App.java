@@ -28,7 +28,7 @@ public class App {
             PipedOutputStream pipeOutMonitorSched = new PipedOutputStream();
             PipedInputStream pipeInMonitorSched = new PipedInputStream(pipeOutMonitorSched);
 
-            // Initialize streams betwee NodeMonitor and Executor
+            // Initialize streams between NodeMonitor and Executor
             PipedOutputStream pipeOutMonitorExec = new PipedOutputStream();
             PipedInputStream pipeInMonitorExec = new PipedInputStream(pipeOutMonitorExec);
 
