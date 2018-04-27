@@ -1,6 +1,7 @@
 package edu.princeton.sparrrow;
 
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * The node monitor receives probes from schedulers, communicates with schedulers
@@ -23,7 +24,7 @@ public class NodeMonitor implements Runnable {
     private ObjectInputStream objFromExec;
     private ObjectOutputStream objToExec;
 
-    public NodeMonitor(int id, PipedInputStream pipeFromSched, PipedOutputStream pipeToSched,
+    public NodeMonitor(int id, ArrayList<PipedInputStream> pipesFromSched, ArrayList<PipedOutputStream> pipesToSched,
                      PipedInputStream pipeFromExec, PipedOutputStream pipeToExec){
         this.id = id;
 

@@ -30,7 +30,7 @@ public class Scheduler implements Runnable {
     private ConcurrentHashMap<UUID, Job> jobs;
 
     public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
-                     PipedInputStream pipeFromNodeMonitor, PipedOutputStream pipeToNodeMonitor){
+                     ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor){
         this.id = id;
 
         this.pipeFromFe = pipeFromFe;
