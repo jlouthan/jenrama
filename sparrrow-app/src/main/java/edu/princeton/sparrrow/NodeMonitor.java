@@ -35,7 +35,6 @@ public class NodeMonitor implements Runnable {
     }
 
     public void run() {
-        TaskResultContent taskResult;
 
         try {
             log("started");
@@ -48,25 +47,15 @@ public class NodeMonitor implements Runnable {
 
             // Set up object IO with Executor
             this.objToExec = new ObjectOutputStream(pipeToExec);
-            this.objFromExec = new ObjectInputStream(pipeFromExec);
 
-            // Receive task result from Executor
-            taskResult = (TaskResultContent)((Message) objFromExec.readObject()).getBody();
-            // Handle message
-            receivedResult(taskResult);
-
-            // Close IO channels
-            pipeFromExec.close();
-            pipeToExec.close();
-            pipeFromSched.close();
+            ExecutorListener executorListener = new ExecutorListener(pipeFromExec, this);
+            executorListener.start();
 
             log("finishing");
             while (true) {
                 // This is here so the parent thread of SchedListener doesn't die
             }
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -133,7 +122,7 @@ public class NodeMonitor implements Runnable {
         objToExec.writeObject(m);
     }
 
-    private void receivedResult(TaskResultContent s) throws IOException{
+    public void receivedResult(TaskResultContent s) throws IOException{
         // Pass task result back to scheduler
         log("received result message from Executor, sending to Scheduler");
         Message m = new Message(MessageType.TASK_RESULT, s);

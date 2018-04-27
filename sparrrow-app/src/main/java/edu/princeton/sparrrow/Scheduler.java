@@ -95,9 +95,7 @@ public class Scheduler implements Runnable {
             this.frontendId = frontendId;
             this.tasksRemaining = (LinkedList) tasksRemaining;
             this.taskResults = new ArrayList<String>();
-            //numTasks = tasksRemaining.size();
-            // TODO use above line instead once executor can process multiple tasks per job
-            numTasks = 1;
+            numTasks = tasksRemaining.size();
         }
 
         public String getNextTaskRemaining() {
@@ -119,7 +117,7 @@ public class Scheduler implements Runnable {
         jobs.put(m.getJobID(), j);
 
         // Send reservations (probes) to node monitor. Currently sending all tasks to one monitor.
-        for (int i = 0; i < j.tasksRemaining.size(); i++) {
+        for (int i = 0; i < j.numTasks; i++) {
             log("received job spec from Frontend, sending probe to NodeMonitor");
             ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
             Message probeMessage = new Message(MessageType.PROBE, probe);
