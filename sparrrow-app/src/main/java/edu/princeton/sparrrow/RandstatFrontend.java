@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.UUID;
 
@@ -14,8 +15,16 @@ public class RandstatFrontend extends Frontend {
         super(id, pipeFromSched, pipeToSched);
     }
 
-    @Override
-    protected JobSpecContent makeJob() {
+    protected Collection<Collection<String>> makeJobs() {
+        LinkedList<Collection<String>> allJobs = new LinkedList<>();
+        allJobs.add(makeJob1());
+        allJobs.add(makeJob2());
+        allJobs.add(makeJob3());
+
+        return allJobs;
+    }
+
+    private Collection<String> makeJob1(){
         LinkedList<String> tasks = new LinkedList<>();
 
         JSONObject task1 = new JSONObject();
@@ -36,9 +45,41 @@ public class RandstatFrontend extends Frontend {
         tasks.add(task1.toString());
         tasks.add(task2.toString());
         tasks.add(task3.toString());
+        return tasks;
+    }
 
-        JobSpecContent job = new JobSpecContent(UUID.randomUUID(), super.id, tasks);
-        return job;
+    private Collection<String> makeJob2(){
+        LinkedList<String> tasks = new LinkedList<>();
+
+        JSONObject task1 = new JSONObject();
+        task1.put("maxVal", 1234);
+        task1.put("num", 23);
+        task1.put("seed", 5);
+
+        JSONObject task2= new JSONObject();
+        task2.put("maxVal", 1235643);
+        task2.put("num", 32);
+        task2.put("seed", 365);
+
+        tasks.add(task1.toString());
+        tasks.add(task2.toString());
+        return tasks;
+    }
+
+    private Collection<String> makeJob3(){
+        LinkedList<String> tasks = new LinkedList<>();
+        int n_tasks = 10;
+
+        JSONObject task = new JSONObject();
+        for(int i = 0; i < n_tasks; i++) {
+            task.put("maxVal", 50);
+            task.put("num", 500 + i);
+            task.put("seed", 72 + i);
+
+            tasks.add(task.toString());
+        }
+
+        return tasks;
     }
 
     protected void handleResult(JobResultContent result){

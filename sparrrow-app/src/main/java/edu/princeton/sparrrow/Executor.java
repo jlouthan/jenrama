@@ -10,7 +10,7 @@ import org.json.JSONObject;
  * The executor receives a job task from a node monitor, executes it, and returns the results.
  */
 
-public class Executor implements Runnable {
+public abstract class Executor implements Runnable {
     protected final int id;
 
     // IO streams to and from NodeMonitor
@@ -20,7 +20,7 @@ public class Executor implements Runnable {
     private ObjectInputStream objFromMonitor;
     private ObjectOutputStream objToMonitor;
 
-    public Executor(int id, PipedInputStream pipeFromMonitor, PipedOutputStream pipeToMonitor){
+    protected Executor(int id, PipedInputStream pipeFromMonitor, PipedOutputStream pipeToMonitor){
         this.id = id;
         this.pipeFromMonitor = pipeFromMonitor;
         this.pipeToMonitor = pipeToMonitor;
@@ -66,22 +66,5 @@ public class Executor implements Runnable {
         System.out.println("Executor: " + text);
     }
 
-    protected TaskResultContent execute(TaskSpecContent s){
-        // TODO: figure out how to inherit this class for arbitrary implementations of execute
-
-        log("received task spec from NodeMonitor, beginning execution");
-        try {
-            for (int i = 0; i < 4; i++) {
-                System.out.println("Executor iteration " + i);
-                Thread.sleep(1000);
-            }
-        } catch (InterruptedException e) {
-            System.out.println("Executor thread interrupted.");
-        }
-
-        log("finished execution, returning result");
-        TaskResultContent myResult = new TaskResultContent(s.getJobID(), s.getTaskID(), s.getSchedID(), "result");
-
-        return myResult;
-    }
+    protected abstract TaskResultContent execute(TaskSpecContent s);
 }

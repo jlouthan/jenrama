@@ -13,7 +13,6 @@ public class RandstatExecutor extends Executor {
         super(id, pipeFromMonitor, pipeToMonitor);
     }
 
-    @Override
     protected TaskResultContent execute(TaskSpecContent s){
         JSONObject mySpec = new JSONObject(s.getSpec());
         int maxVal = mySpec.getInt("maxVal");

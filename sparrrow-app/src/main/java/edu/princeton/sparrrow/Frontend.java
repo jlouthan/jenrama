@@ -4,21 +4,25 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.UUID;
 
 /**
  * A frontend submits jobs to schedulers and receive results in return.
  */
 
-public class Frontend implements Runnable {
+public abstract class Frontend implements Runnable {
 
-    protected final int id;
+    private final int id;
 
     private PipedInputStream pipeFromSched;
     private PipedOutputStream pipeToSched;
 
     private ObjectInputStream objFromSched;
     private ObjectOutputStream objToSched;
+
+    private HashSet<UUID> pendingJobs = new HashSet();
 
     public Frontend(int id, PipedInputStream pipeFromSched, PipedOutputStream pipeToSched){
         this.id = id;
@@ -35,19 +39,33 @@ public class Frontend implements Runnable {
             log("started");
 
 
-            //TODO: put this in a loop to send multiple jobs
-            // Send job specification to scheduler, await result
-            Message m = new Message(MessageType.JOB_SPEC, makeJob());
+            UUID job_id;
+            JobSpecContent j;
+            Message m;
+            for(Collection<String> jobspec : makeJobs()){
+                // Make job specification
+                job_id = UUID.randomUUID();
+                j = new JobSpecContent(job_id, this.id, jobspec);
+                m = new Message(MessageType.JOB_SPEC, j);
 
-            log("sending job spec to scheduler");
-            objToSched.writeObject(m);
-            objToSched.flush();
 
-            //TODO: put this in a loop to await jobs (need to keep track of remaining jobs)
-            // Handle result
-            JobResultContent resultContent = (JobResultContent)((Message) objFromSched.readObject()).getBody();
-            handleResult(resultContent);
+                // Send job specifications to scheduler
+                log("sending job spec to scheduler (ID = " + job_id.toString() + ")");
+                objToSched.writeObject(m);
 
+                // Add job id to pendingJobs
+                pendingJobs.add(job_id);
+            }
+
+            // Awaits the completion of all jobs before exiting
+            JobResultContent resultContent;
+            while(!pendingJobs.isEmpty()){
+                resultContent = (JobResultContent)((Message) objFromSched.readObject()).getBody();
+
+                handleResult(resultContent);
+
+                pendingJobs.remove(resultContent.getJobID());
+            }
 
             pipeFromSched.close();
             pipeToSched.close();
@@ -63,15 +81,8 @@ public class Frontend implements Runnable {
         System.out.println("Frontend: " + text);
     }
 
-    protected JobSpecContent makeJob(){
-        ArrayList<String> tasks = new ArrayList<String>();
+    protected abstract Collection<Collection<String>> makeJobs();
 
-        JobSpecContent job = new JobSpecContent(UUID.randomUUID(), this.id, tasks);
-        return job;
-    }
-
-    protected void handleResult(JobResultContent jobResult){
-        log("received results from " + jobResult.getResults().size() + " tasks");
-    }
+    protected abstract void handleResult(JobResultContent jobResult);
 
 }
