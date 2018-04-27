@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.UUID;
 
 public class RandstatFrontend extends Frontend {
@@ -15,7 +16,7 @@ public class RandstatFrontend extends Frontend {
 
     @Override
     protected JobSpecContent makeJob() {
-        ArrayList<String> tasks = new ArrayList<>();
+        LinkedList<String> tasks = new LinkedList<>();
 
         JSONObject task1 = new JSONObject();
         task1.put("maxVal", 100);
