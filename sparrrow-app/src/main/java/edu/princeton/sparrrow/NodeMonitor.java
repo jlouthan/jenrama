@@ -1,5 +1,7 @@
 package edu.princeton.sparrrow;
 
+import com.sun.tracing.Probe;
+
 import java.io.*;
 
 /**
@@ -38,6 +40,7 @@ public class NodeMonitor implements Runnable {
     public void run() {
         TaskSpecContent taskSpec;
         TaskResultContent taskResult;
+        ProbeContent probe;
 
         try {
             log("started");
@@ -49,6 +52,11 @@ public class NodeMonitor implements Runnable {
             // Set up object IO with Executor
             this.objToExec = new ObjectOutputStream(pipeToExec);
             this.objFromExec = new ObjectInputStream(pipeFromExec);
+
+            // Receive probe from Scheduler
+            probe = (ProbeContent) ((Message) objFromSched.readObject()).getBody();
+            // Handle message
+            receivedReservation(probe);
 
             // Receive task specification from Scheduler
             taskSpec = (TaskSpecContent)((Message) objFromSched.readObject()).getBody();
@@ -80,8 +88,14 @@ public class NodeMonitor implements Runnable {
     }
 
 
-    private void receivedReservation(String m) throws IOException{
+    private void receivedReservation(ProbeContent pc) throws IOException{
         // TODO: add reservation to queue (with enough info to request spec from Scheduler later)
+
+        // TODO: This is placeholder that immediately responds to scheduler w/o any queuing
+        log("received probe from scheduler, replying with probe reply");
+        ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
+        Message m = new Message(MessageType.PROBE_REPLY, probeReply);
+        objToSched.writeObject(m);
     }
 
     private void receivedSpec(TaskSpecContent s) throws IOException{
