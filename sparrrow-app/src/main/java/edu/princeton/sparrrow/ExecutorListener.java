@@ -18,7 +18,7 @@ public class ExecutorListener extends Listener {
         taskResult = (TaskResultContent) m;
         // Handle message
         try {
-            parent.receivedResult(taskResult);
+            parent.handleTaskResult(taskResult);
         } catch (IOException e) {
             e.printStackTrace();
         }

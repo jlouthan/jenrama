@@ -1,6 +1,8 @@
 package edu.princeton.sparrrow;
 
 import java.io.*;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * The node monitor receives probes from schedulers, communicates with schedulers
@@ -9,6 +11,8 @@ import java.io.*;
 
 public class NodeMonitor implements Runnable {
     private final int id;
+    private boolean executor_is_occupied;
+    private Queue<ProbeContent> probeQueue;
 
     // IO streams to and from Scheduler
     private PipedInputStream pipeFromSched;
@@ -20,12 +24,13 @@ public class NodeMonitor implements Runnable {
     private PipedInputStream pipeFromExec;
     private PipedOutputStream pipeToExec;
 
-    private ObjectInputStream objFromExec;
     private ObjectOutputStream objToExec;
 
     public NodeMonitor(int id, PipedInputStream pipeFromSched, PipedOutputStream pipeToSched,
-                     PipedInputStream pipeFromExec, PipedOutputStream pipeToExec){
+                       PipedInputStream pipeFromExec, PipedOutputStream pipeToExec){
         this.id = id;
+        this.executor_is_occupied = false;
+        this.probeQueue = new LinkedList<>();
 
         this.pipeFromSched = pipeFromSched;
         this.pipeToSched = pipeToSched;
@@ -35,7 +40,6 @@ public class NodeMonitor implements Runnable {
     }
 
     public void run() {
-
         try {
             log("started");
 
@@ -81,12 +85,14 @@ public class NodeMonitor implements Runnable {
                         // Receive probe from scheduler
                         probe = (ProbeContent) m;
                         // Handle message
-                        receivedReservation(probe);
-                    } else {
+                        handleProbe(probe);
+                    } else if (m instanceof TaskSpecContent){
                         // Receive task specification from Scheduler
                         taskSpec = (TaskSpecContent) m;
                         // Handle message
-                        receivedSpec(taskSpec);
+                        handleTaskSpec(taskSpec);
+                    } else {
+                        log("ERROR: received message with wrong type");
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -104,29 +110,73 @@ public class NodeMonitor implements Runnable {
         System.out.println("Node Monitor: " + text);
     }
 
-
-    private void receivedReservation(ProbeContent pc) throws IOException{
-        // TODO: add reservation to queue (with enough info to request spec from Scheduler later)
-
-        // TODO: This is placeholder that immediately responds to scheduler w/o any queuing
-        log("received probe from scheduler, replying with probe reply");
+    private void sendProbeReply(ProbeContent pc) throws IOException {
+//        Message m = new Message(MessageType.PROBE_REPLY, pc); // TODO: are these types right for the message?
+//        objToSched.writeObject(m);
+        log("sending probe reply");
         ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
         Message m = new Message(MessageType.PROBE_REPLY, probeReply);
         objToSched.writeObject(m);
     }
 
-    private void receivedSpec(TaskSpecContent s) throws IOException{
-        // Send spec to executor for execution
-        log("received task spec message from Scheduler, sending task " + s.getSpec() + " to Executor");
-        Message m = new Message(MessageType.TASK_SPEC, s);
-        objToExec.writeObject(m);
+    private void handleProbe(ProbeContent pc) throws IOException{
+        log("received probe from scheduler");
+
+        // Add probe to queue
+        queueProbe(pc);
+
+        if (!executor_is_occupied && probeQueue.size() == 1) {
+            // Send probe reply if ready to execute immediately
+            sendProbeReply(pc);
+        }
     }
 
-    public void receivedResult(TaskResultContent s) throws IOException{
+    private void queueProbe(ProbeContent pc) throws IOException{
+        log("adding probe to queue");
+
+        probeQueue.add(pc);
+
+        // TODO: can the queue be full?
+    }
+
+    private void handleTaskSpec(TaskSpecContent s) throws IOException{
+        // Check that spec exists
+        // TODO: what does null spec look like? task spec string will be null
+
+        // Ensure executor is unoccupied
+        if (executor_is_occupied) {
+            log("ERROR: received task spec while executor is occupied");
+        }
+
+        // Remove the probe that was replied to
+        // TODO: check that this spec matches?
+        log("received task spec message from Scheduler, removing probe from queue");
+        ProbeContent pc = probeQueue.poll();
+
+        // Send spec to executor for execution
+        log("sending task " + s.getSpec() + " to Executor");
+        Message m = new Message(MessageType.TASK_SPEC, s);
+        objToExec.writeObject(m);
+
+        // Mark executor as occupied
+        executor_is_occupied = true;
+    }
+
+    public synchronized void handleTaskResult(TaskResultContent s) throws IOException{
+        // Mark executor as unoccupied
+        executor_is_occupied = false;
+
         // Pass task result back to scheduler
         log("received result message from Executor, sending to Scheduler");
         Message m = new Message(MessageType.TASK_RESULT, s);
         objToSched.writeObject(m);
+
+        // Request next task (associated with first probe in queue)
+        ProbeContent pc = probeQueue.peek();
+        if (pc != null) {
+            // Send probe reply
+            sendProbeReply(pc);
+        }
     }
 
 }
