@@ -37,22 +37,28 @@ public class Executor implements Runnable {
             this.objToMonitor = new ObjectOutputStream(pipeToMonitor);
             this.objFromMonitor = new ObjectInputStream(pipeFromMonitor);
 
-            // Receive task specification from Scheduler
-            taskSpec = (TaskSpecContent)((Message) objFromMonitor.readObject()).getBody();
-            // Execute task
-            result = execute(taskSpec);
-            // Return result
-            objToMonitor.writeObject(new Message(MessageType.TASK_RESULT, result));
+            while(true) {
+                // Receive task specification from Scheduler
+                taskSpec = (TaskSpecContent) ((Message) objFromMonitor.readObject()).getBody();
+                // Execute task
+                result = execute(taskSpec);
+                // Return result
+                objToMonitor.writeObject(new Message(MessageType.TASK_RESULT, result));
 
-            // Close IO channels
-            pipeFromMonitor.close();
-            pipeToMonitor.close();
-
-            log("finishing");
+                // Close IO channels
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                pipeFromMonitor.close();
+                pipeToMonitor.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            log("finishing");
         }
     }
 
