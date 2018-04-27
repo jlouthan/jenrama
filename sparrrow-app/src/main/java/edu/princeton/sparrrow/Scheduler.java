@@ -56,7 +56,7 @@ public class Scheduler implements Runnable {
             // Set up object IO with NodeMonitor
             this.objToMonitor = new ObjectOutputStream(pipeToNodeMonitor);
             // listen to monitor
-            MonitorListener monitorListener = new MonitorListener(pipeFromNodeMonitor);
+            MonitorListener monitorListener = new MonitorListener(pipeFromNodeMonitor, this);
             monitorListener.start();
 
             log("started");
@@ -77,44 +77,6 @@ public class Scheduler implements Runnable {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        }
-    }
-
-    private class MonitorListener extends Thread {
-
-        private ObjectInputStream objFromMonitor;
-
-        public MonitorListener(PipedInputStream pipeFromMonitor) throws IOException {
-            this.objFromMonitor = new ObjectInputStream(pipeFromMonitor);
-        }
-
-        public void run() {
-            MessageContent m;
-            TaskResultContent taskResult;
-            ProbeReplyContent probeReply;
-            log("starting monitor listener");
-            while (true) {
-                try {
-                    m = ((Message) objFromMonitor.readObject()).getBody();
-                    if (m instanceof ProbeReplyContent) {
-                        // Receive probe from scheduler
-                        probeReply = (ProbeReplyContent) m;
-                        // Handle message
-                        receivedSpecRequest(probeReply);
-                    } else {
-                        // Receive task specification from Scheduler
-                        taskResult = (TaskResultContent) m;
-                        // Handle message
-                        receivedResult(taskResult);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    break;
-
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -151,7 +113,7 @@ public class Scheduler implements Runnable {
         }
     }
 
-    private void receivedJob(JobSpecContent m) throws IOException{
+    public synchronized void receivedJob(JobSpecContent m) throws IOException{
         // Store some state about the job, including remaining tasks to schedule
         Job j = new Job(m.getFrontendID(), m.getTasks());
         jobs.put(m.getJobID(), j);
@@ -167,7 +129,7 @@ public class Scheduler implements Runnable {
         //TODO: Enable tracking multiple node monitor IDs and probing a subset of them;
     }
 
-    private void receivedSpecRequest(ProbeReplyContent m) throws IOException {
+    public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
         // Find the job containing the requested task spec
         UUID jobId = m.getJobID();
         String task = jobs.get(jobId).getNextTaskRemaining();
@@ -183,7 +145,7 @@ public class Scheduler implements Runnable {
         objToMonitor.writeObject(spec);
     }
 
-    private void receivedResult(TaskResultContent m) throws IOException{
+    public synchronized void receivedResult(TaskResultContent m) throws IOException{
         // collect task result
         UUID jobId = m.getJobID();
         Job job = jobs.get(jobId);
