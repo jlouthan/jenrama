@@ -16,7 +16,6 @@ public class NodeMonitor implements Runnable {
     private PipedInputStream pipeFromSched;
     private PipedOutputStream pipeToSched;
 
-    private ObjectInputStream objFromSched;
     private ObjectOutputStream objToSched;
 
     // IO streams to and from Executor
@@ -38,30 +37,20 @@ public class NodeMonitor implements Runnable {
     }
 
     public void run() {
-        TaskSpecContent taskSpec;
         TaskResultContent taskResult;
-        ProbeContent probe;
 
         try {
             log("started");
 
             // Set up object IO with Scheduler
             this.objToSched = new ObjectOutputStream(pipeToSched);
-            this.objFromSched = new ObjectInputStream(pipeFromSched);
+            // listen to scheduler
+            SchedListener schedListener = new SchedListener(pipeFromSched);
+            schedListener.start();
 
             // Set up object IO with Executor
             this.objToExec = new ObjectOutputStream(pipeToExec);
             this.objFromExec = new ObjectInputStream(pipeFromExec);
-
-            // Receive probe from Scheduler
-            probe = (ProbeContent) ((Message) objFromSched.readObject()).getBody();
-            // Handle message
-            receivedReservation(probe);
-
-            // Receive task specification from Scheduler
-            taskSpec = (TaskSpecContent)((Message) objFromSched.readObject()).getBody();
-            // Handle message
-            receivedSpec(taskSpec);
 
             // Receive task result from Executor
             taskResult = (TaskResultContent)((Message) objFromExec.readObject()).getBody();
@@ -72,13 +61,54 @@ public class NodeMonitor implements Runnable {
             pipeFromExec.close();
             pipeToExec.close();
             pipeFromSched.close();
-            pipeToSched.close();
 
             log("finishing");
+            while (true) {
+                // This is here so the parent thread of SchedListener doesn't die
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    // New thread that listens for messages from scheduler
+    private class SchedListener extends Thread {
+
+        private ObjectInputStream objFromSched;
+
+        public SchedListener(PipedInputStream pipeFromSched) throws IOException {
+            this.objFromSched = new ObjectInputStream(pipeFromSched);
+        }
+
+        public void run() {
+            MessageContent m;
+            ProbeContent probe;
+            TaskSpecContent taskSpec;
+            log("starting sched listener");
+            while (true) {
+                try {
+                    m = ((Message) objFromSched.readObject()).getBody();
+                    if (m instanceof ProbeContent) {
+                        // Receive probe from scheduler
+                        probe = (ProbeContent) m;
+                        // Handle message
+                        receivedReservation(probe);
+                    } else {
+                        // Receive task specification from Scheduler
+                        taskSpec = (TaskSpecContent) m;
+                        // Handle message
+                        receivedSpec(taskSpec);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    break;
+
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -100,7 +130,7 @@ public class NodeMonitor implements Runnable {
 
     private void receivedSpec(TaskSpecContent s) throws IOException{
         // Send spec to executor for execution
-        log("received task spec message from Scheduler, sending to Executor");
+        log("received task spec message from Scheduler, sending task " + s.getSpec() + " to Executor");
         Message m = new Message(MessageType.TASK_SPEC, s);
         objToExec.writeObject(m);
     }

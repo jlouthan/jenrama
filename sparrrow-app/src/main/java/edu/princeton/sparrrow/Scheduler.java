@@ -27,8 +27,9 @@ public class Scheduler implements Runnable {
     private PipedInputStream pipeFromNodeMonitor;
     private PipedOutputStream pipeToNodeMonitor;
 
-    private ObjectInputStream objFromMonitor;
     private ObjectOutputStream objToMonitor;
+
+    private ConcurrentHashMap<UUID, Job> jobs;
 
     public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
                      PipedInputStream pipeFromNodeMonitor, PipedOutputStream pipeToNodeMonitor){
@@ -39,12 +40,13 @@ public class Scheduler implements Runnable {
 
         this.pipeFromNodeMonitor = pipeFromNodeMonitor;
         this.pipeToNodeMonitor = pipeToNodeMonitor;
+
+        jobs = new ConcurrentHashMap<>();
+
     }
 
     public void run() {
         JobSpecContent newJob;
-        TaskResultContent taskResult;
-        ProbeReplyContent probeReply;
 
         try {
 
@@ -55,7 +57,9 @@ public class Scheduler implements Runnable {
 
             // Set up object IO with NodeMonitor
             this.objToMonitor = new ObjectOutputStream(pipeToNodeMonitor);
-            this.objFromMonitor = new ObjectInputStream(pipeFromNodeMonitor);
+            // listen to monitor
+            MonitorListener monitorListener = new MonitorListener(pipeFromNodeMonitor);
+            monitorListener.start();
 
             log("started");
 
@@ -64,23 +68,13 @@ public class Scheduler implements Runnable {
             // Handle message
             receivedJob(newJob);
 
-            // Receive request for task spec from NodeMonitor
-            probeReply = (ProbeReplyContent) ((Message) objFromMonitor.readObject()).getBody();
-            // Handle message
-            receivedSpecRequest(probeReply);
-
-            // Receive task result from NodeMonitor
-            taskResult = (TaskResultContent)((Message) objFromMonitor.readObject()).getBody();
-            // Handle message
-            receivedResult(taskResult);
-
             // Close IO channels
             pipeFromFe.close();
-            pipeToFe.close();
-            pipeToNodeMonitor.close();
-            pipeFromNodeMonitor.close();
 
             log("finishing");
+            while (true) {
+                // This is here so the parent thread of MonitorListener doesn't die
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -88,15 +82,51 @@ public class Scheduler implements Runnable {
         }
     }
 
+    private class MonitorListener extends Thread {
+
+        private ObjectInputStream objFromMonitor;
+
+        public MonitorListener(PipedInputStream pipeFromMonitor) throws IOException {
+            this.objFromMonitor = new ObjectInputStream(pipeFromMonitor);
+        }
+
+        public void run() {
+            MessageContent m;
+            TaskResultContent taskResult;
+            ProbeReplyContent probeReply;
+            log("starting monitor listener");
+            while (true) {
+                try {
+                    m = ((Message) objFromMonitor.readObject()).getBody();
+                    if (m instanceof ProbeReplyContent) {
+                        // Receive probe from scheduler
+                        probeReply = (ProbeReplyContent) m;
+                        // Handle message
+                        receivedSpecRequest(probeReply);
+                    } else {
+                        // Receive task specification from Scheduler
+                        taskResult = (TaskResultContent) m;
+                        // Handle message
+                        receivedResult(taskResult);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    break;
+
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     private void log(String text){
         System.out.println("Scheduler: " + text);
     }
 
-    //TODO move to its own class?
     private class Job {
         private int frontendId;
         private LinkedList<String> tasksRemaining;
-        //TODO add tasksInFlight or something?? to track sent tasks that aren't yet completed?
         private ArrayList<String> taskResults;
 
         // Create a new job with no task results yet
@@ -114,25 +144,23 @@ public class Scheduler implements Runnable {
         }
     }
 
-    // TODO move to top of class?
-    private ConcurrentHashMap<UUID, Job> jobs = new ConcurrentHashMap<>();
-
     private void receivedJob(JobSpecContent m) throws IOException{
-        //TODO: Store some state about the job, including remaining tasks to schedule
+        //Store some state about the job, including remaining tasks to schedule
         Job j = new Job(m.getFrontendID(), m.getTasks());
         jobs.put(m.getJobID(), j);
 
-        //TODO: Send reservations (probes) to node monitor
-        log("received job spec from Frontend, sending probe to NodeMonitor");
-        ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
-        Message probeMessage = new Message(MessageType.PROBE, probe);
-        objToMonitor.writeObject(probeMessage);
+        //Send reservations (probes) to node monitor
+        for (int i = 0; i < m.getTasks().size(); i++) {
+            log("received job spec from Frontend, sending probe to NodeMonitor");
+            ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
+            Message probeMessage = new Message(MessageType.PROBE, probe);
+            objToMonitor.writeObject(probeMessage);
+        }
 
         //TODO: Enable tracking multiple node monitor IDs and probing a subset of them;
     }
 
-    private void receivedSpecRequest(ProbeReplyContent m) throws IOException{
-        log("received task spec request from NodeMonitor, sending task spec to NodeMonitor");
+    private void receivedSpecRequest(ProbeReplyContent m) throws IOException {
 
         // Find the job containing the requested task spec
         UUID jobId = m.getJobID();
@@ -142,6 +170,7 @@ public class Scheduler implements Runnable {
         if (task == null) {
             return;
         }
+        log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
         // Create one task spec to pass to node monitor
         TaskSpecContent taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
         Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
@@ -160,4 +189,5 @@ public class Scheduler implements Runnable {
         Message reply = new Message(MessageType.JOB_RESULT, newMessage);
         objToFe.writeObject(reply);
     }
+
 }
