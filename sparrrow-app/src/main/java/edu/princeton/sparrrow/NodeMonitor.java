@@ -1,12 +1,9 @@
 package edu.princeton.sparrrow;
 
 import java.io.*;
-<<<<<<< HEAD
 import java.util.ArrayList;
-=======
 import java.util.LinkedList;
 import java.util.Queue;
->>>>>>> 4660e7af4aa46579fc032ac60454ddfe20dfda32
 
 /**
  * The node monitor receives probes from schedulers, communicates with schedulers
