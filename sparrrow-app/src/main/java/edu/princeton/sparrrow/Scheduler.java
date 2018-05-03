@@ -44,38 +44,30 @@ public class Scheduler implements Runnable {
     }
 
     public void run() {
-        JobSpecContent newJob;
 
         try {
 
             // Set up object IO with Frontend
             this.objToFe = new ObjectOutputStream(pipeToFe);
-            this.objFromFe = new ObjectInputStream(pipeFromFe);
-
+            FrontendListener frontendListener = new FrontendListener(pipeFromFe, this);
+            frontendListener.start();
 
             // Set up object IO with NodeMonitor
             this.objToMonitor = new ObjectOutputStream(pipeToNodeMonitor);
-            // listen to monitor
             MonitorListener monitorListener = new MonitorListener(pipeFromNodeMonitor, this);
             monitorListener.start();
 
             log("started");
 
-            // Receive job from Frontend
-            newJob = (JobSpecContent)((Message) objFromFe.readObject()).getBody();
-            // Handle message
-            receivedJob(newJob);
-
             // Close IO channels
-            pipeFromFe.close();
+            //pipeFromFe.close();
 
-            log("finishing");
+            //log("finishing");
+
             while (true) {
                 // This is here so the parent thread of MonitorListener doesn't die
             }
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
