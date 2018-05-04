@@ -97,7 +97,7 @@ public class Scheduler implements Runnable {
     }
 
     private void log(String text){
-        System.out.println("Scheduler: " + text);
+        System.out.println("Scheduler[" + this.id + "]: " + text);
     }
 
     private class Job {

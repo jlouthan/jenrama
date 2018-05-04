@@ -78,7 +78,7 @@ public abstract class Frontend implements Runnable {
     }
 
     protected void log(String text){
-        System.out.println("Frontend: " + text);
+        System.out.println("Frontend[" + this.id + "]: " + text);
     }
 
     protected abstract Collection<Collection<String>> makeJobs();

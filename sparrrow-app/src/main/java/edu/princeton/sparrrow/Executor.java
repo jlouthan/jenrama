@@ -41,6 +41,7 @@ public abstract class Executor implements Runnable {
                 // Receive task specification from Scheduler
                 taskSpec = (TaskSpecContent) ((Message) objFromMonitor.readObject()).getBody();
                 // Execute task
+                log("executing task " + taskSpec.getTaskID());
                 result = execute(taskSpec);
                 // Return result
                 objToMonitor.writeObject(new Message(MessageType.TASK_RESULT, result));
@@ -63,7 +64,7 @@ public abstract class Executor implements Runnable {
     }
 
     private void log(String text){
-        System.out.println("Executor: " + text);
+        System.out.println("Executor[" + this.id + "]: " + text);
     }
 
     protected abstract TaskResultContent execute(TaskSpecContent s);
