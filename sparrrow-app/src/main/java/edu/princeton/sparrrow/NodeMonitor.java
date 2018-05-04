@@ -48,13 +48,15 @@ public class NodeMonitor implements Runnable {
             // Set up object IO with Scheduler
             this.objToSched = new ObjectOutputStream(pipeToSched);
             // listen to scheduler
-            SchedListener schedListener = new SchedListener(pipeFromSched);
+            SchedListener schedListener = new SchedListener(pipeFromSched, this);
+            log("starting sched listener");
             schedListener.start();
 
             // Set up object IO with Executor
             this.objToExec = new ObjectOutputStream(pipeToExec);
 
             ExecutorListener executorListener = new ExecutorListener(pipeFromExec, this);
+            log("starting executor listener");
             executorListener.start();
 
             log("finishing");
@@ -66,62 +68,18 @@ public class NodeMonitor implements Runnable {
         }
     }
 
-    // New thread that listens for messages from scheduler
-    private class SchedListener extends Thread {
-
-        private ObjectInputStream objFromSched;
-
-        public SchedListener(PipedInputStream pipeFromSched) throws IOException {
-            this.objFromSched = new ObjectInputStream(pipeFromSched);
-        }
-
-        public void run() {
-            MessageContent m;
-            ProbeContent probe;
-            TaskSpecContent taskSpec;
-            log("starting sched listener");
-            while (true) {
-                try {
-                    m = ((Message) objFromSched.readObject()).getBody();
-                    if (m instanceof ProbeContent) {
-                        // Receive probe from scheduler
-                        probe = (ProbeContent) m;
-                        // Handle message
-                        handleProbe(probe);
-                    } else if (m instanceof TaskSpecContent){
-                        // Receive task specification from Scheduler
-                        taskSpec = (TaskSpecContent) m;
-                        // Handle message
-                        handleTaskSpec(taskSpec);
-                    } else {
-                        log("ERROR: received message with wrong type");
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    break;
-
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-
-    private void log(String text){
+    public synchronized void log(String text){
         System.out.println("Node Monitor: " + text);
     }
 
     private void sendProbeReply(ProbeContent pc) throws IOException {
-//        Message m = new Message(MessageType.PROBE_REPLY, pc); // TODO: are these types right for the message?
-//        objToSched.writeObject(m);
         log("sending probe reply");
         ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
         Message m = new Message(MessageType.PROBE_REPLY, probeReply);
         objToSched.writeObject(m);
     }
 
-    private void handleProbe(ProbeContent pc) throws IOException{
+    public synchronized void handleProbe(ProbeContent pc) throws IOException{
         log("received probe from scheduler");
 
         // Add probe to queue
@@ -141,13 +99,14 @@ public class NodeMonitor implements Runnable {
         // TODO: can the queue be full?
     }
 
-    private void handleTaskSpec(TaskSpecContent s) throws IOException{
+    public synchronized void handleTaskSpec(TaskSpecContent s) throws IOException{
         // Check that spec exists
         // TODO: what does null spec look like? task spec string will be null
 
         // Ensure executor is unoccupied
         if (executor_is_occupied) {
             log("ERROR: received task spec while executor is occupied");
+            // TODO: make execution queue
         }
 
         // Remove the probe that was replied to
