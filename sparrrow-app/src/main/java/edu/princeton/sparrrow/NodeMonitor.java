@@ -58,7 +58,7 @@ public class NodeMonitor implements Runnable {
                 this.schedListeners.add(schedListener);
             }
 
-            // listen to Schedulers
+            // Listen to Schedulers
             log("starting sched listeners");
             for (int i = 0; i < numSchedulers; i++) {
                 schedListeners.get(i).start();
@@ -91,6 +91,8 @@ public class NodeMonitor implements Runnable {
         objToSched = this.objsToScheds.get(pc.getSchedID());
 
         log("sending probe reply to scheduler " + pc.getSchedID());
+
+        // Send probe reply to (request task spec from) scheduler
         ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
         Message m = new Message(MessageType.PROBE_REPLY, probeReply);
         objToSched.writeObject(m);
@@ -138,6 +140,7 @@ public class NodeMonitor implements Runnable {
                 // Send probe reply
                 sendProbeReply(pc);
             }
+            return;
         }
 
         // Ensure executor is unoccupied
