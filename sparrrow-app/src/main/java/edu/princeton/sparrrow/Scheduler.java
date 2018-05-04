@@ -12,7 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 public class Scheduler implements Runnable {
-    private final int id;
+    protected final int id;
+    protected final int d;
 
     // IO streams to and from Frontend
     private PipedInputStream pipeFromFe;
@@ -24,19 +25,20 @@ public class Scheduler implements Runnable {
     private ArrayList<PipedOutputStream> pipesToNodeMonitor;
 
     private ArrayList<MonitorListener> monitorListeners;
-    private ArrayList<ObjectOutputStream> objToNodeMonitors;
+    protected ArrayList<ObjectOutputStream> objToNodeMonitors;
 
     // data structure for storing state of jobs in flight
-    private ConcurrentHashMap<UUID, Job> jobs;
+    protected ConcurrentHashMap<UUID, Job> jobs;
 
     // list of node monitor ids that will be shuffled to determine where to place task probes
-    private List<Integer> monitorIds;
+    protected List<Integer> monitorIds;
 
     private int numMonitors;
 
     public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
-                     ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor) {
+                     ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor, int d) {
         this.id = id;
+        this.d = d;
 
         this.pipeFromFe = pipeFromFe;
         this.pipeToFe = pipeToFe;
@@ -96,15 +98,15 @@ public class Scheduler implements Runnable {
         }
     }
 
-    private void log(String text){
+    protected void log(String text){
         System.out.println("Scheduler[" + this.id + "]: " + text);
     }
 
-    private class Job {
+    protected class Job {
         private int frontendId;
         private LinkedList<String> tasksRemaining;
         private ArrayList<String> taskResults;
-        private int numTasks;
+        protected int numTasks;
 
         // Create a new job with no task results yet
         public Job(int frontendId, Collection<String> tasksRemaining) {
@@ -136,9 +138,6 @@ public class Scheduler implements Runnable {
         log(id + " received job spec from Frontend");
         // Randomize node monitor ids to choose which to place tasks on
         Collections.shuffle(monitorIds);
-
-        // TODO this should probably be a constant in an external config file eventually
-        int d = 2;
 
         log(this.id + " d * m is: " + d * j.numTasks);
         // Send reservations (probes) to d*m selected node monitors
