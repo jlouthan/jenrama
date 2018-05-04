@@ -27,7 +27,7 @@ public class NodeMonitor implements Runnable {
     private ObjectOutputStream objToExec;
 
     public NodeMonitor(int id, ArrayList<PipedInputStream> pipesFromScheds, ArrayList<PipedOutputStream> pipesToScheds,
-                       PipedInputStream pipeFromExec, PipedOutputStream pipeToExec){
+                       PipedInputStream pipeFromExec, PipedOutputStream pipeToExec) throws IOException {
 
         this.id = id;
         this.executor_is_occupied = false;
@@ -36,6 +36,7 @@ public class NodeMonitor implements Runnable {
         this.pipesFromScheds = pipesFromScheds;
         this.pipesToScheds = pipesToScheds;
         this.objsToScheds = new ArrayList<>();
+
         this.schedListeners = new ArrayList<>();
 
         this.pipeFromExec = pipeFromExec;
@@ -49,12 +50,12 @@ public class NodeMonitor implements Runnable {
             // Set up object IO with Schedulers
             int numSchedulers = this.pipesFromScheds.size();
             for (int i = 0; i < numSchedulers; i++) {
+                ObjectOutputStream objToSched = new ObjectOutputStream(pipesToScheds.get(i));
+                this.objsToScheds.add(objToSched);
+
                 SchedListener schedListener = new SchedListener(pipesFromScheds.get(i), this);
                 this.schedListeners.add(schedListener);
                 log("Added scheduler listener " + i + " in node monitor " + this.id);
-
-                ObjectOutputStream objToSched = new ObjectOutputStream(pipesToScheds.get(i));
-                this.objsToScheds.add(objToSched);
             }
 
             // listen to Schedulers
