@@ -17,27 +17,30 @@ public class Scheduler implements Runnable {
     // IO streams to and from Frontend
     private PipedInputStream pipeFromFe;
     private PipedOutputStream pipeToFe;
-
-    private ObjectInputStream objFromFe;
     private ObjectOutputStream objToFe;
 
-    // IO streams to and from NodeMonitor
-    private PipedInputStream pipeFromNodeMonitor;
-    private PipedOutputStream pipeToNodeMonitor;
+    // IO streams to and from ann node monitors
+    private ArrayList<PipedInputStream> pipesFromNodeMonitor;
+    private ArrayList<PipedOutputStream> pipesToNodeMonitor;
 
-    private ObjectOutputStream objToMonitor;
+    private ArrayList<MonitorListener> monitorListeners;
+    private ArrayList<ObjectOutputStream> objToNodeMonitors;
 
+    // data structure for storing state of jobs in flight
     private ConcurrentHashMap<UUID, Job> jobs;
 
     public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
-                     ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor){
+                     ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor) throws IOException {
         this.id = id;
 
         this.pipeFromFe = pipeFromFe;
         this.pipeToFe = pipeToFe;
 
-        this.pipeFromNodeMonitor = pipeFromNodeMonitor;
-        this.pipeToNodeMonitor = pipeToNodeMonitor;
+        this.pipesFromNodeMonitor = pipesFromNodeMonitor;
+        this.pipesToNodeMonitor = pipesToNodeMonitor;
+
+        monitorListeners = new ArrayList<>();
+        objToNodeMonitors = new ArrayList<>();
 
         jobs = new ConcurrentHashMap<>();
 
@@ -53,16 +56,28 @@ public class Scheduler implements Runnable {
             frontendListener.start();
 
             // Set up object IO with NodeMonitor
-            this.objToMonitor = new ObjectOutputStream(pipeToNodeMonitor);
-            MonitorListener monitorListener = new MonitorListener(pipeFromNodeMonitor, this);
-            monitorListener.start();
+            //TODO this shouldn't need to be in here? or at least not hard-wired like this
+            int numExecutors = 5;
+            int startIndex = numExecutors * this.id;
 
-            log("started");
+            for (int i = startIndex; i < startIndex + numExecutors; i++) {
+                // Create a listener for each Node Monitor
+                log("Adding monitor listener " + i + " in scheduler " + this.id);
+                MonitorListener monitorListener = new MonitorListener(pipesFromNodeMonitor.get(i), this);
+                monitorListeners.add(monitorListener);
 
-            // Close IO channels
-            //pipeFromFe.close();
+                // Create a obj stream to each Node Monitor
+                ObjectOutputStream objToMonitor = new ObjectOutputStream(pipesToNodeMonitor.get(i));
+                objToNodeMonitors.add(objToMonitor);
+            }
 
-            //log("finishing");
+            // start the listener to each node monitor
+            for (int i = 0; i < numExecutors; i++) {
+                monitorListeners.get(i).start();
+            }
+
+            log("started id " + id);
+
 
             while (true) {
                 // This is here so the parent thread of MonitorListener doesn't die
@@ -86,7 +101,7 @@ public class Scheduler implements Runnable {
         public Job(int frontendId, Collection<String> tasksRemaining) {
             this.frontendId = frontendId;
             this.tasksRemaining = (LinkedList) tasksRemaining;
-            this.taskResults = new ArrayList<String>();
+            this.taskResults = new ArrayList<>();
             numTasks = tasksRemaining.size();
         }
 
@@ -108,12 +123,14 @@ public class Scheduler implements Runnable {
         Job j = new Job(m.getFrontendID(), m.getTasks());
         jobs.put(m.getJobID(), j);
 
+        log(id + " received job spec from Frontend, sending probes to NodeMonitor");
         // Send reservations (probes) to node monitor. Currently sending all tasks to one monitor.
         for (int i = 0; i < j.numTasks; i++) {
-            log("received job spec from Frontend, sending probe to NodeMonitor");
             ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
             Message probeMessage = new Message(MessageType.PROBE, probe);
-            objToMonitor.writeObject(probeMessage);
+            //objToMonitor.writeObject(probeMessage);
+            // TODO temporarily only write to first node monitor
+            objToNodeMonitors.get(0).writeObject(probeMessage);
         }
 
         //TODO: Enable tracking multiple node monitor IDs and probing a subset of them;
@@ -123,6 +140,8 @@ public class Scheduler implements Runnable {
         // Find the job containing the requested task spec
         UUID jobId = m.getJobID();
         String task = jobs.get(jobId).getNextTaskRemaining();
+        // Identify the node monitor making the request
+        int monitorId = m.getMonitorID();
 
         // If there are no more tasks for the job, ignore the request from the Node Monitor
         if (task == null) {
@@ -132,7 +151,8 @@ public class Scheduler implements Runnable {
         // Create one task spec to pass to node monitor
         TaskSpecContent taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
         Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
-        objToMonitor.writeObject(spec);
+        objToNodeMonitors.get(monitorId).writeObject(spec);
+//        objToMonitor.writeObject(spec);
     }
 
     public synchronized void receivedResult(TaskResultContent m) throws IOException{
