@@ -8,7 +8,7 @@ public class MonitorListener extends Listener {
     private Scheduler parent;
 
     public MonitorListener(PipedInputStream pipeFromMonitor, Scheduler parent) throws IOException {
-        super.inputStream = new ObjectInputStream(pipeFromMonitor);
+        super.pipeInputStream = pipeFromMonitor;
         this.parent = parent;
     }
 

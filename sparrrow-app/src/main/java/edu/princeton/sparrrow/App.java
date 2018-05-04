@@ -141,11 +141,11 @@ public class App {
             }
 
             // Start NodeMonitors
-            for(i = 0; i < monitors.size(); i++){
-                t = new Thread(monitors.get(i), "Monitor " + i);
-                t.start();
-                allThreads.add(t);
-            }
+//            for(i = 0; i < monitors.size(); i++){
+//                t = new Thread(monitors.get(i), "Monitor " + i);
+//                t.start();
+//                allThreads.add(t);
+//            }
 
             // Start Schedulers
             for(i = 0; i < schedulers.size(); i++){
