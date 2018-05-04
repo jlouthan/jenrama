@@ -41,7 +41,6 @@ public class App {
 
             // nf * ne total pipes
             // the pipe between scheduler i and monitor j is at index i*(ne) + j - 1
-            // (not that we'll ever need to access them this way hopefully)
             for (i = 0; i < n_frontends * n_executors; i++){
                 pipeOutSchedMonitor = new PipedOutputStream();
                 pipeInSchedMonitor = new PipedInputStream(pipeOutSchedMonitor);
@@ -64,6 +63,10 @@ public class App {
             PipedOutputStream pipeOutSchedFe;
             PipedInputStream pipeInSchedFe;
 
+            ArrayList<PipedInputStream> mySchedsIn;
+            ArrayList<PipedOutputStream> mySchedsOut;
+            int j;
+
             Frontend fe;
             Scheduler sched;
             for (i = 0; i < n_frontends; i++){
@@ -76,8 +79,16 @@ public class App {
                 fe = new RandstatFrontend(i, pipeInSchedFe, pipeOutFeSched);
                 fes.add(fe);
 
+                mySchedsIn = new ArrayList<>();
+                mySchedsOut = new ArrayList<>();
+                for(j = 0; j < n_executors; j++){
+                    mySchedsIn.add(schedsIn.get(i * n_executors + j));
+                    mySchedsOut.add(schedsOut.get(i * n_executors + j));
+                }
+
+
                 sched = new Scheduler(i, pipeInFeSched, pipeOutSchedFe,
-                        schedsIn, schedsOut);
+                        mySchedsIn, mySchedsOut);
                 schedulers.add(sched);
             }
 
@@ -85,11 +96,14 @@ public class App {
 
             // Initialize streams between NodeMonitor and Executor
             // and create Executors and Nodemonitors at the same time
-            PipedOutputStream pipeOutMonitorExec = new PipedOutputStream();
-            PipedInputStream pipeInMonitorExec = new PipedInputStream(pipeOutMonitorExec);
+            PipedOutputStream pipeOutMonitorExec;
+            PipedInputStream pipeInMonitorExec;
 
-            PipedOutputStream pipeOutExecMonitor = new PipedOutputStream();
-            PipedInputStream pipeInExecMonitor = new PipedInputStream(pipeOutExecMonitor);
+            PipedOutputStream pipeOutExecMonitor;
+            PipedInputStream pipeInExecMonitor;
+
+            ArrayList<PipedInputStream> myMonitorsIn;
+            ArrayList<PipedOutputStream> myMonitorsOut;
 
             Executor ex;
             for(i = 0; i < n_executors; i++){
@@ -103,7 +117,14 @@ public class App {
                 ex = new RandstatExecutor(i, pipeInMonitorExec, pipeOutExecMonitor);
                 executors.add(ex);
 
-                NodeMonitor monitor = new NodeMonitor(i, monitorsIn, monitorsOut,
+                myMonitorsIn = new ArrayList<>();
+                myMonitorsOut = new ArrayList<>();
+                for(j = 0; j < n_frontends; j++){
+                    myMonitorsIn.add(monitorsIn.get(i + n_frontends * j));
+                    myMonitorsOut.add(monitorsOut.get(i + n_frontends * j));
+                }
+
+                NodeMonitor monitor = new NodeMonitor(i, myMonitorsIn, myMonitorsOut,
                         pipeInExecMonitor, pipeOutMonitorExec);
                 monitors.add(monitor);
             }
