@@ -29,8 +29,13 @@ public class Scheduler implements Runnable {
     // data structure for storing state of jobs in flight
     private ConcurrentHashMap<UUID, Job> jobs;
 
+    // list of node monitor ids that will be shuffled to determine where to place task probes
+    private List<Integer> monitorIds;
+
+    private int numExecutors;
+
     public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
-                     ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor) throws IOException {
+                     ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor) {
         this.id = id;
 
         this.pipeFromFe = pipeFromFe;
@@ -44,6 +49,16 @@ public class Scheduler implements Runnable {
 
         jobs = new ConcurrentHashMap<>();
 
+        //TODO this shouldn't need to be in here? or at least not hard-wired like this
+        numExecutors = 5;
+
+        // set up the list of node monitor ids
+        monitorIds = new ArrayList<>();
+        for(int i = 0; i < numExecutors; i++) {
+            monitorIds.add(i);
+        }
+
+
     }
 
     public void run() {
@@ -56,8 +71,6 @@ public class Scheduler implements Runnable {
             frontendListener.start();
 
             // Set up object IO with NodeMonitor
-            //TODO this shouldn't need to be in here? or at least not hard-wired like this
-            int numExecutors = 5;
             int startIndex = numExecutors * this.id;
 
             for (int i = startIndex; i < startIndex + numExecutors; i++) {
@@ -123,17 +136,25 @@ public class Scheduler implements Runnable {
         Job j = new Job(m.getFrontendID(), m.getTasks());
         jobs.put(m.getJobID(), j);
 
-        log(id + " received job spec from Frontend, sending probes to NodeMonitor");
-        // Send reservations (probes) to node monitor. Currently sending all tasks to one monitor.
-        for (int i = 0; i < j.numTasks; i++) {
+        log(id + " received job spec from Frontend");
+        // Randomize node monitor ids to choose which to place tasks on
+        Collections.shuffle(monitorIds);
+
+        // TODO this should probably be a constant in an external config file eventually
+        int d = 2;
+
+        log("d * m is: " + d * j.numTasks);
+        // Send reservations (probes) to d*m selected node monitors
+        for (int i = 0; i < d * j.numTasks; i++) {
+            int monitorId = monitorIds.get(i % numExecutors);
+
             ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
             Message probeMessage = new Message(MessageType.PROBE, probe);
-            //objToMonitor.writeObject(probeMessage);
-            // TODO temporarily only write to first node monitor
-            objToNodeMonitors.get(0).writeObject(probeMessage);
+
+            log(id + " sending probe to monitor " + monitorId);
+            objToNodeMonitors.get(monitorId).writeObject(probeMessage);
         }
 
-        //TODO: Enable tracking multiple node monitor IDs and probing a subset of them;
     }
 
     public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
@@ -152,7 +173,6 @@ public class Scheduler implements Runnable {
         TaskSpecContent taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
         Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
         objToNodeMonitors.get(monitorId).writeObject(spec);
-//        objToMonitor.writeObject(spec);
     }
 
     public synchronized void receivedResult(TaskResultContent m) throws IOException{
