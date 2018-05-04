@@ -95,24 +95,41 @@ public class NodeMonitor implements Runnable {
         log("adding probe to queue");
 
         probeQueue.add(pc);
-
-        // TODO: can the queue be full?
     }
 
     public synchronized void handleTaskSpec(TaskSpecContent s) throws IOException{
-        // Check that spec exists
-        // TODO: what does null spec look like? task spec string will be null
+        // Check that the spec matches the first probe
+        ProbeContent pc = probeQueue.peek();
+        if (pc == null) {
+            log("ERROR: received task spec but probe queue is empty");
+            return;
+        }
+        // TODO: is there a better way to compare these? UUID?
+        if (s.getJobID() != pc.getJobID() || s.getSchedID() != pc.getSchedID()) {
+            log("ERROR: received task spec that does not match requested spec");
+            return;
+        }
+        // Remove the probe that was replied to
+        log("received task spec message from Scheduler, removing probe from queue");
+        probeQueue.poll();
+
+
+        // If spec does not exist, ask for a new spec by requesting
+        // the next task (associated with first probe in queue)
+        if (s.getSpec() == null) {
+            pc = probeQueue.poll();
+            if (pc != null) {
+                // Send probe reply
+                sendProbeReply(pc);
+            }
+        }
 
         // Ensure executor is unoccupied
         if (executor_is_occupied) {
             log("ERROR: received task spec while executor is occupied");
             // TODO: make execution queue
+            return;
         }
-
-        // Remove the probe that was replied to
-        // TODO: check that this spec matches?
-        log("received task spec message from Scheduler, removing probe from queue");
-        ProbeContent pc = probeQueue.poll();
 
         // Send spec to executor for execution
         log("sending task " + s.getSpec() + " to Executor");
