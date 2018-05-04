@@ -104,6 +104,8 @@ public class NodeMonitor implements Runnable {
         ProbeContent pc = probeQueue.peek();
         if (pc != null) {
             sendProbeReply(pc);
+        } else {
+            log("no more probes to send");
         }
     }
 
@@ -145,6 +147,7 @@ public class NodeMonitor implements Runnable {
 
         // If spec does not exist (if its job has finished), ask for a new spec
         if (s.getSpec() == null) {
+            log("task spec received was null, sending next probe reply");
             sendNextProbeReply();
             return;
         }
