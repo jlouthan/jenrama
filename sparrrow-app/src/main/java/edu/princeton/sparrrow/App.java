@@ -120,8 +120,8 @@ public class App {
                 myMonitorsIn = new ArrayList<>();
                 myMonitorsOut = new ArrayList<>();
                 for(j = 0; j < n_frontends; j++){
-                    myMonitorsIn.add(monitorsIn.get(i + n_frontends * j));
-                    myMonitorsOut.add(monitorsOut.get(i + n_frontends * j));
+                    myMonitorsIn.add(monitorsIn.get(i + n_executors * j));
+                    myMonitorsOut.add(monitorsOut.get(i + n_executors * j));
                 }
 
                 NodeMonitor monitor = new NodeMonitor(i, myMonitorsIn, myMonitorsOut,
