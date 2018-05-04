@@ -32,7 +32,7 @@ public class Scheduler implements Runnable {
     // list of node monitor ids that will be shuffled to determine where to place task probes
     private List<Integer> monitorIds;
 
-    private int numExecutors;
+    private int numMonitors;
 
     public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
                      ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor) {
@@ -49,12 +49,10 @@ public class Scheduler implements Runnable {
 
         jobs = new ConcurrentHashMap<>();
 
-        //TODO this shouldn't need to be in here? or at least not hard-wired like this
-        numExecutors = 5;
-
+        numMonitors = pipesFromNodeMonitor.size();
         // set up the list of node monitor ids
         monitorIds = new ArrayList<>();
-        for(int i = 0; i < numExecutors; i++) {
+        for(int i = 0; i < numMonitors; i++) {
             monitorIds.add(i);
         }
 
@@ -70,10 +68,8 @@ public class Scheduler implements Runnable {
             FrontendListener frontendListener = new FrontendListener(pipeFromFe, this);
             frontendListener.start();
 
-            // Set up object IO with NodeMonitor
-            int startIndex = numExecutors * this.id;
-
-            for (int i = startIndex; i < startIndex + numExecutors; i++) {
+            // Set up object IO with NodeMonitors
+            for (int i = 0; i < numMonitors; i++) {
                 // Create a listener for each Node Monitor
                 log("Adding monitor listener " + i + " in scheduler " + this.id);
                 MonitorListener monitorListener = new MonitorListener(pipesFromNodeMonitor.get(i), this);
@@ -85,7 +81,7 @@ public class Scheduler implements Runnable {
             }
 
             // start the listener to each node monitor
-            for (int i = 0; i < numExecutors; i++) {
+            for (int i = 0; i < numMonitors; i++) {
                 monitorListeners.get(i).start();
             }
 
@@ -143,10 +139,10 @@ public class Scheduler implements Runnable {
         // TODO this should probably be a constant in an external config file eventually
         int d = 2;
 
-        log("d * m is: " + d * j.numTasks);
+        log(this.id + " d * m is: " + d * j.numTasks);
         // Send reservations (probes) to d*m selected node monitors
         for (int i = 0; i < d * j.numTasks; i++) {
-            int monitorId = monitorIds.get(i % numExecutors);
+            int monitorId = monitorIds.get(i % numMonitors);
 
             ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
             Message probeMessage = new Message(MessageType.PROBE, probe);
