@@ -67,9 +67,11 @@ public abstract class Frontend implements Runnable {
                 pendingJobs.remove(resultContent.getJobID());
             }
 
-            pipeFromSched.close();
-            pipeToSched.close();
-            log("finishing");
+            while (true) ;
+
+//            pipeFromSched.close();
+//            pipeToSched.close();
+//            log("finishing");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {

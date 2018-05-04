@@ -90,7 +90,7 @@ public class NodeMonitor implements Runnable {
         // Determine correct scheduler to write to
         objToSched = this.objsToScheds.get(pc.getSchedID());
 
-        log("sending probe reply to scheduler " + pc.getSchedID());
+        log("sending probe reply for job " + pc.getJobID() + " to scheduler " + pc.getSchedID());
 
         // Send probe reply to (request task spec from) scheduler
         ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
@@ -124,7 +124,9 @@ public class NodeMonitor implements Runnable {
             return;
         }
         if (!s.getJobID().equals(pc.getJobID()) || s.getSchedID() != pc.getSchedID()) {
-            log("ERROR: received task spec that does not match requested spec");
+            log("ERROR: received task spec that does not match requested spec, s.id = "
+                    + s.getJobID() + ", pc.id = " + pc.getJobID() + ", s.sid = " + s.getSchedID()
+                    + ", pc.sid = " + pc.getSchedID());
             return;
         }
         // Remove the probe that was replied to
@@ -135,7 +137,7 @@ public class NodeMonitor implements Runnable {
         // If spec does not exist (if its job has finished), ask for a new spec by requesting
         // the next task (associated with first probe in queue)
         if (s.getSpec() == null) {
-            pc = probeQueue.poll();
+            pc = probeQueue.peek();
             if (pc != null) {
                 // Send probe reply
                 sendProbeReply(pc);
