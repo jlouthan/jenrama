@@ -123,6 +123,7 @@ public class Scheduler implements Runnable {
 
         public boolean isComplete() {
             // currently there is no validation that the task results are for unique tasks
+            log("Checking if job is complete; It has finished " + taskResults.size() + " jobs out of " + numTasks);
             return taskResults.size() == numTasks;
         }
     }
@@ -154,19 +155,23 @@ public class Scheduler implements Runnable {
     }
 
     public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
+        TaskSpecContent taskSpec;
+
         // Find the job containing the requested task spec
         UUID jobId = m.getJobID();
         String task = jobs.get(jobId).getNextTaskRemaining();
         // Identify the node monitor making the request
         int monitorId = m.getMonitorID();
 
-        // If there are no more tasks for the job, ignore the request from the Node Monitor
+        // If there are no more tasks for the job, send null spec back to Node Monitor
         if (task == null) {
-            return;
+            log("received task spec request for finished job, sending null reply");
+            taskSpec = new TaskSpecContent(jobId, null, this.id, null);
+        } else {
+            log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
+            // Create one task spec to pass to node monitor
+            taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
         }
-        log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
-        // Create one task spec to pass to node monitor
-        TaskSpecContent taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
         Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
         objToNodeMonitors.get(monitorId).writeObject(spec);
     }
