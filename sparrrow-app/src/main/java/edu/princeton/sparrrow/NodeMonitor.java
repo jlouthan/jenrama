@@ -49,13 +49,13 @@ public class NodeMonitor implements Runnable {
 
             // Set up object IO with Schedulers
             int numSchedulers = this.pipesFromScheds.size();
+            log("adding obj output streams and sched listeners");
             for (int i = 0; i < numSchedulers; i++) {
                 ObjectOutputStream objToSched = new ObjectOutputStream(pipesToScheds.get(i));
                 this.objsToScheds.add(objToSched);
 
                 SchedListener schedListener = new SchedListener(pipesFromScheds.get(i), this);
                 this.schedListeners.add(schedListener);
-                log("Added scheduler listener " + i + " in node monitor " + this.id);
             }
 
             // listen to Schedulers
@@ -81,14 +81,14 @@ public class NodeMonitor implements Runnable {
     }
 
     public synchronized void log(String text){
-        System.out.println("Node Monitor: " + text);
+        System.out.println("Node Monitor[" + this.id + "]: " + text);
     }
 
     private void sendProbeReply(ProbeContent pc) throws IOException {
         ObjectOutputStream objToSched;
 
         // Determine correct scheduler to write to
-        objToSched = this.objsToScheds.get(0); // TODO: this
+        objToSched = this.objsToScheds.get(pc.getSchedID());
 
         log("sending probe reply");
         ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
@@ -163,7 +163,7 @@ public class NodeMonitor implements Runnable {
         executor_is_occupied = false;
 
         // Determine correct scheduler to write to
-        objToSched = this.objsToScheds.get(0); // TODO: this
+        objToSched = this.objsToScheds.get(s.getSchedID());
         // Pass task result back to scheduler
         log("received result message from Executor, sending to Scheduler");
         Message m = new Message(MessageType.TASK_RESULT, s);
