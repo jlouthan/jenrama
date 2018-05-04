@@ -17,8 +17,8 @@ public class App {
 
         try{
 
-            int n_frontends = 3;
-            int n_executors = 5;
+            int n_frontends = 2;
+            int n_executors = 3;
             int i;
 
             ArrayList<Scheduler> schedulers = new ArrayList<>();

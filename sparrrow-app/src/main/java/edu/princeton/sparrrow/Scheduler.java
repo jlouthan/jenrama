@@ -71,7 +71,7 @@ public class Scheduler implements Runnable {
             // Set up object IO with NodeMonitors
             for (int i = 0; i < numMonitors; i++) {
                 // Create a listener for each Node Monitor
-                log("Adding monitor listener " + i + " in scheduler " + this.id);
+                log("adding monitor listener " + i);
                 MonitorListener monitorListener = new MonitorListener(pipesFromNodeMonitor.get(i), this);
                 monitorListeners.add(monitorListener);
 
@@ -85,7 +85,7 @@ public class Scheduler implements Runnable {
                 monitorListeners.get(i).start();
             }
 
-            log("started id " + id);
+            log("started");
 
 
             while (true) {
@@ -148,7 +148,7 @@ public class Scheduler implements Runnable {
             ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
             Message probeMessage = new Message(MessageType.PROBE, probe);
 
-            log(id + " sending probe to monitor " + monitorId);
+            log("sending probe to monitor " + monitorId);
             objToNodeMonitors.get(monitorId).writeObject(probeMessage);
         }
 

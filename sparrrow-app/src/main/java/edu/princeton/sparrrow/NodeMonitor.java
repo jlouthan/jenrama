@@ -58,7 +58,7 @@ public class NodeMonitor implements Runnable {
                 this.schedListeners.add(schedListener);
             }
 
-            // listen to Schedulers
+            // Listen to Schedulers
             log("starting sched listeners");
             for (int i = 0; i < numSchedulers; i++) {
                 schedListeners.get(i).start();
@@ -90,14 +90,16 @@ public class NodeMonitor implements Runnable {
         // Determine correct scheduler to write to
         objToSched = this.objsToScheds.get(pc.getSchedID());
 
-        log("sending probe reply");
+        log("sending probe reply to scheduler " + pc.getSchedID());
+
+        // Send probe reply to (request task spec from) scheduler
         ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
         Message m = new Message(MessageType.PROBE_REPLY, probeReply);
         objToSched.writeObject(m);
     }
 
     public synchronized void handleProbe(ProbeContent pc) throws IOException{
-        log("received probe from scheduler");
+        log("received probe from scheduler " + pc.getSchedID());
 
         // Add probe to queue
         queueProbe(pc);
@@ -126,11 +128,11 @@ public class NodeMonitor implements Runnable {
             return;
         }
         // Remove the probe that was replied to
-        log("received task spec message from Scheduler, removing probe from queue");
+        log("received task spec message from scheduler, removing probe from queue");
         probeQueue.poll();
 
 
-        // If spec does not exist, ask for a new spec by requesting
+        // If spec does not exist (if its job has finished), ask for a new spec by requesting
         // the next task (associated with first probe in queue)
         if (s.getSpec() == null) {
             pc = probeQueue.poll();
@@ -138,6 +140,7 @@ public class NodeMonitor implements Runnable {
                 // Send probe reply
                 sendProbeReply(pc);
             }
+            return;
         }
 
         // Ensure executor is unoccupied
@@ -148,7 +151,7 @@ public class NodeMonitor implements Runnable {
         }
 
         // Send spec to executor for execution
-        log("sending task " + s.getSpec() + " to Executor");
+        log("sending task " + s.getSpec() + " to executor");
         Message m = new Message(MessageType.TASK_SPEC, s);
         objToExec.writeObject(m);
 
@@ -165,7 +168,7 @@ public class NodeMonitor implements Runnable {
         // Determine correct scheduler to write to
         objToSched = this.objsToScheds.get(s.getSchedID());
         // Pass task result back to scheduler
-        log("received result message from Executor, sending to Scheduler");
+        log("received result message from executor, sending to scheduler " + s.getSchedID());
         Message m = new Message(MessageType.TASK_RESULT, s);
         objToSched.writeObject(m);
 
