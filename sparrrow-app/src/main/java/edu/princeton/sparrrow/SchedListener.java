@@ -9,7 +9,7 @@ public class SchedListener extends Listener {
     private NodeMonitor parent;
 
     public SchedListener(PipedInputStream pipeFromSched, NodeMonitor parent) throws IOException {
-        super.inputStream = new ObjectInputStream(pipeFromSched);
+        super.pipeInputStream = pipeFromSched;
         this.parent = parent;
     }
 
