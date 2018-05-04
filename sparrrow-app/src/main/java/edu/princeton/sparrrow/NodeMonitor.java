@@ -120,8 +120,7 @@ public class NodeMonitor implements Runnable {
             log("ERROR: received task spec but probe queue is empty");
             return;
         }
-        // TODO: is there a better way to compare these? UUID?
-        if (s.getJobID() != pc.getJobID() || s.getSchedID() != pc.getSchedID()) {
+        if (!s.getJobID().equals(pc.getJobID()) || s.getSchedID() != pc.getSchedID()) {
             log("ERROR: received task spec that does not match requested spec");
             return;
         }
