@@ -15,27 +15,28 @@ public class NodeMonitor implements Runnable {
     private boolean executor_is_occupied;
     private Queue<ProbeContent> probeQueue;
 
-    // IO streams to and from Scheduler
-    private PipedInputStream pipeFromSched;
-    private PipedOutputStream pipeToSched;
-
-    private ObjectOutputStream objToSched;
+    // IO streams to and from Schedulers
+    private ArrayList<PipedInputStream> pipesFromScheds;
+    private ArrayList<PipedOutputStream> pipesToScheds;
+    private ArrayList<ObjectOutputStream> objsToScheds;
+    private ArrayList<SchedListener> schedListeners;
 
     // IO streams to and from Executor
     private PipedInputStream pipeFromExec;
     private PipedOutputStream pipeToExec;
-
     private ObjectOutputStream objToExec;
 
-    public NodeMonitor(int id, ArrayList<PipedInputStream> pipesFromSched, ArrayList<PipedOutputStream> pipesToSched,
-                     PipedInputStream pipeFromExec, PipedOutputStream pipeToExec){
+    public NodeMonitor(int id, ArrayList<PipedInputStream> pipesFromScheds, ArrayList<PipedOutputStream> pipesToScheds,
+                       PipedInputStream pipeFromExec, PipedOutputStream pipeToExec){
 
         this.id = id;
         this.executor_is_occupied = false;
         this.probeQueue = new LinkedList<>();
 
-        this.pipeFromSched = pipeFromSched;
-        this.pipeToSched = pipeToSched;
+        this.pipesFromScheds = pipesFromScheds;
+        this.pipesToScheds = pipesToScheds;
+        this.objsToScheds = new ArrayList<>();
+        this.schedListeners = new ArrayList<>();
 
         this.pipeFromExec = pipeFromExec;
         this.pipeToExec = pipeToExec;
@@ -45,12 +46,22 @@ public class NodeMonitor implements Runnable {
         try {
             log("started");
 
-            // Set up object IO with Scheduler
-            this.objToSched = new ObjectOutputStream(pipeToSched);
-            // listen to scheduler
-            SchedListener schedListener = new SchedListener(pipeFromSched, this);
-            log("starting sched listener");
-            schedListener.start();
+            // Set up object IO with Schedulers
+            int numSchedulers = this.pipesFromScheds.size();
+            for (int i = 0; i < numSchedulers; i++) {
+                SchedListener schedListener = new SchedListener(pipesFromScheds.get(i), this);
+                this.schedListeners.add(schedListener);
+                log("Added scheduler listener " + i + " in node monitor " + this.id);
+
+                ObjectOutputStream objToSched = new ObjectOutputStream(pipesToScheds.get(i));
+                this.objsToScheds.add(objToSched);
+            }
+
+            // listen to Schedulers
+            log("starting sched listeners");
+            for (int i = 0; i < numSchedulers; i++) {
+                schedListeners.get(i).start();
+            }
 
             // Set up object IO with Executor
             this.objToExec = new ObjectOutputStream(pipeToExec);
@@ -73,6 +84,11 @@ public class NodeMonitor implements Runnable {
     }
 
     private void sendProbeReply(ProbeContent pc) throws IOException {
+        ObjectOutputStream objToSched;
+
+        // Determine correct scheduler to write to
+        objToSched = this.objsToScheds.get(0); // TODO: this
+
         log("sending probe reply");
         ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
         Message m = new Message(MessageType.PROBE_REPLY, probeReply);
@@ -141,9 +157,13 @@ public class NodeMonitor implements Runnable {
     }
 
     public synchronized void handleTaskResult(TaskResultContent s) throws IOException{
+        ObjectOutputStream objToSched;
+
         // Mark executor as unoccupied
         executor_is_occupied = false;
 
+        // Determine correct scheduler to write to
+        objToSched = this.objsToScheds.get(0); // TODO: this
         // Pass task result back to scheduler
         log("received result message from Executor, sending to Scheduler");
         Message m = new Message(MessageType.TASK_RESULT, s);
