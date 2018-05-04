@@ -47,7 +47,7 @@ public class NodeMonitor implements Runnable {
         try {
             log("started");
 
-            // Set up object IO with Schedulers
+            // Set up object IO and listener with Schedulers
             int numSchedulers = this.pipesFromScheds.size();
             log("adding obj output streams and sched listeners");
             for (int i = 0; i < numSchedulers; i++) {
@@ -58,7 +58,7 @@ public class NodeMonitor implements Runnable {
                 this.schedListeners.add(schedListener);
             }
 
-            // Listen to Schedulers
+            // Start listening to Schedulers
             log("starting sched listeners");
             for (int i = 0; i < numSchedulers; i++) {
                 schedListeners.get(i).start();
@@ -67,6 +67,7 @@ public class NodeMonitor implements Runnable {
             // Set up object IO with Executor
             this.objToExec = new ObjectOutputStream(pipeToExec);
 
+            // Start listening to Executor
             ExecutorListener executorListener = new ExecutorListener(pipeFromExec, this);
             log("starting executor listener");
             executorListener.start();
@@ -85,17 +86,25 @@ public class NodeMonitor implements Runnable {
     }
 
     private void sendProbeReply(ProbeContent pc) throws IOException {
-        ObjectOutputStream objToSched;
-
         // Determine correct scheduler to write to
-        objToSched = this.objsToScheds.get(pc.getSchedID());
+        int destination_scheduler = pc.getSchedID();
+        ObjectOutputStream objToSched = this.objsToScheds.get(destination_scheduler);
 
-        log("sending probe reply for job " + pc.getJobID() + " to scheduler " + pc.getSchedID());
+        log("sending probe reply for job " + pc.getJobID() + " to scheduler " + destination_scheduler);
 
         // Send probe reply to (request task spec from) scheduler
         ProbeReplyContent probeReply = new ProbeReplyContent(pc.getJobID(), this.id);
         Message m = new Message(MessageType.PROBE_REPLY, probeReply);
         objToSched.writeObject(m);
+    }
+
+    // Gets probe from head of queue and if it exists, sends reply to
+    // (requests task spec from) scheduler
+    private void sendNextProbeReply() throws IOException {
+        ProbeContent pc = probeQueue.peek();
+        if (pc != null) {
+            sendProbeReply(pc);
+        }
     }
 
     public synchronized void handleProbe(ProbeContent pc) throws IOException{
@@ -120,28 +129,23 @@ public class NodeMonitor implements Runnable {
         // Check that the spec matches the first probe
         ProbeContent pc = probeQueue.peek();
         if (pc == null) {
-            log("ERROR: received task spec but probe queue is empty");
+            log("ERROR: received task spec but was not expecting one (probe queue is empty)");
             return;
         }
         if (!s.getJobID().equals(pc.getJobID()) || s.getSchedID() != pc.getSchedID()) {
-            log("ERROR: received task spec that does not match requested spec, s.id = "
-                    + s.getJobID() + ", pc.id = " + pc.getJobID() + ", s.sid = " + s.getSchedID()
-                    + ", pc.sid = " + pc.getSchedID());
+            log("ERROR: received task spec for job " + s.getJobID()
+                    + " from scheduler " + s.getSchedID()
+                    + " that does not match requested spec for job " + pc.getJobID()
+                    + " from scheduler " + pc.getSchedID());
             return;
         }
         // Remove the probe that was replied to
         log("received task spec message from scheduler, removing probe from queue");
         probeQueue.poll();
 
-
-        // If spec does not exist (if its job has finished), ask for a new spec by requesting
-        // the next task (associated with first probe in queue)
+        // If spec does not exist (if its job has finished), ask for a new spec
         if (s.getSpec() == null) {
-            pc = probeQueue.peek();
-            if (pc != null) {
-                // Send probe reply
-                sendProbeReply(pc);
-            }
+            sendNextProbeReply();
             return;
         }
 
@@ -175,11 +179,7 @@ public class NodeMonitor implements Runnable {
         objToSched.writeObject(m);
 
         // Request next task (associated with first probe in queue)
-        ProbeContent pc = probeQueue.peek();
-        if (pc != null) {
-            // Send probe reply
-            sendProbeReply(pc);
-        }
+        sendNextProbeReply();
     }
 
 }
