@@ -88,7 +88,7 @@ public class App {
 
 
                 sched = new Scheduler(i, pipeInFeSched, pipeOutSchedFe,
-                        mySchedsIn, mySchedsOut);
+                        mySchedsIn, mySchedsOut, 2);
                 schedulers.add(sched);
             }
 
