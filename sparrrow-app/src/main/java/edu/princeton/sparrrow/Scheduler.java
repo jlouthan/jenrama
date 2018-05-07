@@ -33,7 +33,7 @@ public class Scheduler implements Runnable {
     // list of node monitor ids that will be shuffled to determine where to place task probes
     protected List<Integer> monitorIds;
 
-    private int numMonitors;
+    protected int numMonitors;
 
     public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
                      ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor, int d) {
