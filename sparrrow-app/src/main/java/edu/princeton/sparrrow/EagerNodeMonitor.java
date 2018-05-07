@@ -64,7 +64,7 @@ public class EagerNodeMonitor extends NodeMonitor {
 
     private void sendNextTask() throws IOException {
         // Get next task
-        TaskSpecContent spec = taskQueue.peek();
+        TaskSpecContent spec = taskQueue.poll();
         if (spec != null) {
             sendTaskToExecutor(spec);
         } else {

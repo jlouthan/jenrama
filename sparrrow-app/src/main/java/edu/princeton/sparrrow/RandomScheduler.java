@@ -13,6 +13,7 @@ public class RandomScheduler extends Scheduler {
         super(id, pipeFromFe, pipeToFe, pipesFromNodeMonitor, pipesToNodeMonitor, d);
     }
 
+    @Override
     public synchronized void receivedJob(JobSpecContent m) throws IOException {
         Job j = new Job(m.getFrontendID(), m.getTasks());
         jobs.put(m.getJobID(), j);
@@ -42,6 +43,7 @@ public class RandomScheduler extends Scheduler {
     }
 
 
+    @Override
     public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
         log("ERROR: RandomScheduler sending specs instead of probes, but I recieved a spec request");
     }

@@ -125,7 +125,7 @@ public class Scheduler implements Runnable {
 
         public boolean isComplete() {
             // currently there is no validation that the task results are for unique tasks
-            log("Checking if job is complete; It has finished " + taskResults.size() + " jobs out of " + numTasks);
+            log("Checking if job is complete; It has finished " + taskResults.size() + " tasks out of " + numTasks);
             return taskResults.size() == numTasks;
         }
     }
