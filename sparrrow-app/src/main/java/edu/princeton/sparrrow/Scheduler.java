@@ -158,6 +158,10 @@ public class Scheduler implements Runnable {
 
         // Find the job containing the requested task spec
         UUID jobId = m.getJobID();
+        // If receive spec request for job that doesn't exist, show error
+        if (!jobs.containsKey(jobId)) {
+            log("ERROR:  Received spec request for job " + jobId + " that doesn't exist.");
+        }
         String task = jobs.get(jobId).getNextTaskRemaining();
         // Identify the node monitor making the request
         int monitorId = m.getMonitorID();
