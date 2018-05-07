@@ -3,8 +3,8 @@ package edu.princeton.sparrrow;
 import java.util.UUID;
 
 public class ProbeReplyContent extends MessageContent {
-    private final UUID jobID;
-    private final int monitorID;
+    protected final UUID jobID;
+    protected final int monitorID;
 
     public ProbeReplyContent(UUID jobID, int monitorID){
         this.jobID = jobID;

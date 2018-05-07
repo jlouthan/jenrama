@@ -6,17 +6,13 @@ import java.io.PipedOutputStream;
 import java.util.*;
 
 public class PerTaskScheduler extends Scheduler {
-        private HashSet<UUID> takenTasks;
-        private HashMap<UUID, UUID> task2job;
-        private HashMap<UUID, String> task2spec;
-
+        private HashMap<UUID, PendingTask> pendingTasks;
 
         public PerTaskScheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
                                ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor, int d) {
             super(id, pipeFromFe, pipeToFe, pipesFromNodeMonitor, pipesToNodeMonitor, d);
-            takenTasks = new HashSet<>();
-            task2job = new HashMap<>();
-            task2spec = new HashMap<>();
+
+            pendingTasks = new HashMap<>();
         }
 
         // Upon recieving a job, send out d probes for each task
@@ -29,6 +25,7 @@ public class PerTaskScheduler extends Scheduler {
 
             ArrayList<Integer> myMonitors;
             UUID taskId;
+            PendingTask pt;
             for (int i = 0; i < taskSpecs.length; i++) {
                 // Randomize node monitor ids to choose which to place tasks on
                 Collections.shuffle(monitorIds);
@@ -44,10 +41,9 @@ public class PerTaskScheduler extends Scheduler {
                 ProbeContent probe = new ProbeContent(taskId, this.id);
                 Message probeMessage = new Message(MessageType.PROBE, probe);
 
-                // Store task UUID -> job UUID in hashmap so that we can find the job later
-                task2job.put(taskId, m.getJobID());
-                // Ditto with the job spec
-                task2spec.put(taskId, taskSpecs[i]);
+                // Store task UUID -> PendingTask in hashmap so that we can find the job later
+                pt = new PendingTask(taskId, m.getJobID(), d, taskSpecs[i]);
+                pendingTasks.put(taskId, pt);
 
                 for(int monitorId : myMonitors){
                     log("sending task probe to monitor " + monitorId + "(taskId = " + taskId + ")");
@@ -59,35 +55,49 @@ public class PerTaskScheduler extends Scheduler {
         }
 
         @Override
-        public void receivedSpecRequest(ProbeReplyContent m) throws IOException {
+        public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
             TaskSpecContent taskSpec;
 
-            UUID jobId = task2job.get(m.getJobID());
-            UUID taskId = m.getJobID();
-            String taskSpecStr = task2spec.get(m.getJobID());
+            // Retrieve information for the task referred to in this probe
+            PendingTask myTask = pendingTasks.get(m.getJobID());
+            UUID jobId = myTask.myJob;
+            UUID taskId = myTask.id;
+            String taskSpecStr = myTask.spec;
 
             // Identify the node monitor making the request
             int monitorId = m.getMonitorID();
 
-            synchronized (takenTasks){
-                if (takenTasks.contains(taskId)) {
-                    log("recieved request for already-allocated task, sending null reply");
-                    taskSpec = new TaskSpecContent(jobId, null, this.id, null);
-                } else {
-                    takenTasks.add(taskId);
-                    log("received spec request from NodeMonitor, sending task " + taskId + " to NodeMonitor");
-                    // Create one task spec to pass to node monitor
-                    taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, taskSpecStr);
-                }
+            myTask.replies[myTask.numReplies++] = m.getqLength();
+
+            if(myTask.numReplies == d){
+                log("finished sampling for task" + taskId + ", sending to NodeMonitor");
+                // Create one task spec to pass to node monitor
+                taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, taskSpecStr);
+
+                Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
+                objToNodeMonitors.get(monitorId).writeObject(spec);
             }
-            // if task hasn't been given out, send the task spec to the first responder
-            // and mark this task as already given (USING TASK ID IN JOB ID FIELD)
-
-            // otherwise, reply with null response
-
-            Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
-            objToNodeMonitors.get(monitorId).writeObject(spec);
         }
 
+        private class PendingTask {
+            final UUID id;
+            final UUID myJob;
+            final int d;
+            final int[] replies;
+            final int[] myMonitors;
+            int numReplies = 0;
+            final String spec;
+
+
+            PendingTask(UUID id, UUID myJob, int d, String spec, int[] myMonitors){
+                this.id = id;
+                this.myJob = myJob;
+                this.d = d;
+                this.replies = new int[d];
+                this.myMonitors = myMonitors;
+                this.spec = spec;
+            }
+
+    }
 
 }
