@@ -12,19 +12,19 @@ import java.util.Queue;
 
 public class NodeMonitor implements Runnable {
     private final int id;
-    private boolean executor_is_occupied;
+    protected boolean executor_is_occupied;
     private Queue<ProbeContent> probeQueue;
 
     // IO streams to and from Schedulers
     private ArrayList<PipedInputStream> pipesFromScheds;
     private ArrayList<PipedOutputStream> pipesToScheds;
-    private ArrayList<ObjectOutputStream> objsToScheds;
+    protected ArrayList<ObjectOutputStream> objsToScheds;
     private ArrayList<SchedListener> schedListeners;
 
     // IO streams to and from Executor
     private PipedInputStream pipeFromExec;
     private PipedOutputStream pipeToExec;
-    private ObjectOutputStream objToExec;
+    protected ObjectOutputStream objToExec;
 
     public NodeMonitor(int id, ArrayList<PipedInputStream> pipesFromScheds, ArrayList<PipedOutputStream> pipesToScheds,
                        PipedInputStream pipeFromExec, PipedOutputStream pipeToExec) throws IOException {
@@ -74,7 +74,7 @@ public class NodeMonitor implements Runnable {
 
             log("finishing");
             while (true) {
-                // This is here so the parent thread of SchedListener doesn't die
+                // This is here so the parent thread of the listeners doesn't die
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -169,15 +169,15 @@ public class NodeMonitor implements Runnable {
     }
 
     public synchronized void handleTaskResult(TaskResultContent s) throws IOException{
-        ObjectOutputStream objToSched;
-
         // Mark executor as unoccupied
         executor_is_occupied = false;
 
         // Determine correct scheduler to write to
-        objToSched = this.objsToScheds.get(s.getSchedID());
+        int destination_scheduler = s.getSchedID();
+        ObjectOutputStream objToSched = this.objsToScheds.get(destination_scheduler);
+
         // Pass task result back to scheduler
-        log("received result message from executor, sending to scheduler " + s.getSchedID());
+        log("received result message from executor, sending to scheduler " + destination_scheduler);
         Message m = new Message(MessageType.TASK_RESULT, s);
         objToSched.writeObject(m);
 
