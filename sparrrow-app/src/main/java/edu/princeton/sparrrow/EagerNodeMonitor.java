@@ -13,18 +13,37 @@ import java.util.Queue;
  * to coordinate receiving job tasks, and sends those tasks to its executor.
  */
 
-public class ProbelessNodeMonitor extends NodeMonitor {
+public class EagerNodeMonitor extends NodeMonitor {
     private Queue<TaskSpecContent> taskQueue;
 
-    public ProbelessNodeMonitor(int id, ArrayList<PipedInputStream> pipesFromScheds, ArrayList<PipedOutputStream> pipesToScheds,
-                                PipedInputStream pipeFromExec, PipedOutputStream pipeToExec) throws IOException {
+    public EagerNodeMonitor(int id, ArrayList<PipedInputStream> pipesFromScheds, ArrayList<PipedOutputStream> pipesToScheds,
+                            PipedInputStream pipeFromExec, PipedOutputStream pipeToExec) throws IOException {
         super(id, pipesFromScheds, pipesToScheds, pipeFromExec, pipeToExec);
         this.taskQueue = new LinkedList<>();
     }
 
+    private void sendDetailedProbeReply(ProbeContent pc, int queue_len) throws IOException {
+        // Determine correct scheduler to write to
+        int destination_scheduler = pc.getSchedID();
+        ObjectOutputStream objToSched = this.objsToScheds.get(destination_scheduler);
+
+        log("sending probe reply for job " + pc.getJobID() + " to scheduler " + destination_scheduler);
+
+        // Send probe reply to (request task spec from) scheduler
+        DetailedProbeReplyContent probeReply = new DetailedProbeReplyContent(pc.getJobID(), this.id, queue_len);
+        Message m = new Message(MessageType.PROBE_REPLY, probeReply);
+        objToSched.writeObject(m);
+    }
+
     @Override
     public synchronized void handleProbe(ProbeContent pc) throws IOException{
-        log("ERROR: probeless node monitor received probe from scheduler " + pc.getSchedID());
+        log("eager node monitor received probe from scheduler " + pc.getSchedID());
+
+        // Get execution queue length
+        int queue_len = taskQueue.size();
+
+        // Send probe reply with length
+        sendDetailedProbeReply(pc, queue_len);
     }
 
     private void queueTask(TaskSpecContent spec) throws IOException{
@@ -55,6 +74,7 @@ public class ProbelessNodeMonitor extends NodeMonitor {
 
     @Override
     public synchronized void handleTaskSpec(TaskSpecContent spec) throws IOException{
+        log("received task spec message from scheduler");
         // Queue spec if executor is occupied
         if (executor_is_occupied) {
             queueTask(spec);

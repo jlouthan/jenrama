@@ -11,7 +11,7 @@ import java.util.Queue;
  */
 
 public class NodeMonitor implements Runnable {
-    private final int id;
+    protected final int id;
     protected boolean executor_is_occupied;
     private Queue<ProbeContent> probeQueue;
 
