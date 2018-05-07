@@ -1,6 +1,5 @@
 package edu.princeton.sparrrow;
 
-import javax.xml.soap.Detail;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -69,16 +68,30 @@ public class PerTaskScheduler extends Scheduler {
             // Identify the node monitor making the request
             int monitorId = m.getMonitorID();
 
-            myTask.myMonitors.add(mes.getMonitorID());
-            myTask.replies[myTask.numReplies++] = mes.getqLength();
+            // Store the value that the node monitor gave for its queue for this task
+            myTask.replies[myTask.myMonitors.indexOf(monitorId)] = mes.getqLength();
+            myTask.numReplies++;
 
+            // If all our probes have returned, give the task to the best monitor
             if(myTask.numReplies == d){
-                log("finished sampling for task" + taskId + ", sending to NodeMonitor");
-                // Create one task spec to pass to node monitor
+                log("finished sampling for task" + taskId + ", sending to NodeMonitors");
+
+                // Figure out the best monitor (shortest queue) to give my task to
+                int i;
+                int bestMonitor = -1;
+                int bestQ = Integer.MAX_VALUE;
+                for(i = 0; i < myTask.d; i++){
+                    if (myTask.replies[i] < bestQ){
+                        bestMonitor = myTask.myMonitors.get(i);
+                    }
+                }
+
+                // Create task spec to pass to node monitor
                 taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, taskSpecStr);
 
+                // Send the task to my favorite monitor
                 Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
-                objToNodeMonitors.get(monitorId).writeObject(spec);
+                objToNodeMonitors.get(bestMonitor).writeObject(spec);
             }
         }
 
