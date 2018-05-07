@@ -21,7 +21,7 @@ public class PerTaskScheduler extends Scheduler {
         public synchronized void receivedJob(JobSpecContent m) throws IOException {
             log(id + " received job spec from Frontend, starting task sampling (jobId = " + m.getJobID() + ")");
 
-            String[] taskSpecs = (String[]) m.getTasks().toArray();
+            ArrayList<String> taskSpecs = new ArrayList<>(m.getTasks());
 
             Job job = new Job(m.getFrontendID(), m.getTasks());
             jobs.put(m.getJobID(), job);
@@ -31,14 +31,14 @@ public class PerTaskScheduler extends Scheduler {
             UUID taskId;
             PendingTask pt;
             int i, j;
-            for (i = 0; i < taskSpecs.length; i++) {
+            for (i = 0; i < taskSpecs.size(); i++) {
                 // Randomize node monitor ids to choose which to place tasks on
                 Collections.shuffle(monitorIds);
 
                 // Select d monitors to sample for this task
                 myMonitors = new ArrayList<>();
                 for(j = 0; j < d; j++){
-                    myMonitors.add(monitorIds.get(d % monitorIds.size()));
+                    myMonitors.add(monitorIds.get(j % monitorIds.size()));
                 }
 
                 // Create probe message, USING TASK ID IN THE JOB ID FIELD
@@ -47,7 +47,7 @@ public class PerTaskScheduler extends Scheduler {
                 Message probeMessage = new Message(MessageType.PROBE, probe);
 
                 // Store task UUID -> PendingTask in hashmap so that we can find the job later
-                pt = new PendingTask(taskId, m.getJobID(), taskSpecs[i], myMonitors);
+                pt = new PendingTask(taskId, m.getJobID(), taskSpecs.get(i), myMonitors);
                 pendingTasks.put(taskId, pt);
 
                 for(int monitorId : myMonitors){
