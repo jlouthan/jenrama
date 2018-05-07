@@ -1,5 +1,6 @@
 package edu.princeton.sparrrow;
 
+import javax.xml.soap.Detail;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -42,7 +43,7 @@ public class PerTaskScheduler extends Scheduler {
                 Message probeMessage = new Message(MessageType.PROBE, probe);
 
                 // Store task UUID -> PendingTask in hashmap so that we can find the job later
-                pt = new PendingTask(taskId, m.getJobID(), d, taskSpecs[i]);
+                pt = new PendingTask(taskId, m.getJobID(), d, taskSpecs[i], myMonitors);
                 pendingTasks.put(taskId, pt);
 
                 for(int monitorId : myMonitors){
@@ -57,6 +58,7 @@ public class PerTaskScheduler extends Scheduler {
         @Override
         public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
             TaskSpecContent taskSpec;
+            DetailedProbeReplyContent mes = (DetailedProbeReplyContent) m;
 
             // Retrieve information for the task referred to in this probe
             PendingTask myTask = pendingTasks.get(m.getJobID());
@@ -67,7 +69,8 @@ public class PerTaskScheduler extends Scheduler {
             // Identify the node monitor making the request
             int monitorId = m.getMonitorID();
 
-            myTask.replies[myTask.numReplies++] = m.getqLength();
+            myTask.myMonitors.add(mes.getMonitorID());
+            myTask.replies[myTask.numReplies++] = mes.getqLength();
 
             if(myTask.numReplies == d){
                 log("finished sampling for task" + taskId + ", sending to NodeMonitor");
@@ -84,12 +87,12 @@ public class PerTaskScheduler extends Scheduler {
             final UUID myJob;
             final int d;
             final int[] replies;
-            final int[] myMonitors;
+            final ArrayList<Integer> myMonitors;
             int numReplies = 0;
             final String spec;
 
 
-            PendingTask(UUID id, UUID myJob, int d, String spec, int[] myMonitors){
+            PendingTask(UUID id, UUID myJob, int d, String spec,  ArrayList<Integer> myMonitors){
                 this.id = id;
                 this.myJob = myJob;
                 this.d = d;
