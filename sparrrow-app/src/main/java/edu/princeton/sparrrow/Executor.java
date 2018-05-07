@@ -1,9 +1,10 @@
 package edu.princeton.sparrrow;
 
-import java.io.*;
-import java.util.ArrayList;
-
-import org.json.JSONObject;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 
 /**
@@ -14,16 +15,14 @@ public abstract class Executor implements Runnable {
     protected final int id;
 
     // IO streams to and from NodeMonitor
-    private PipedInputStream pipeFromMonitor;
-    private PipedOutputStream pipeToMonitor;
+    private Socket socketWithMonitor;
 
     private ObjectInputStream objFromMonitor;
     private ObjectOutputStream objToMonitor;
 
-    protected Executor(int id, PipedInputStream pipeFromMonitor, PipedOutputStream pipeToMonitor){
+    protected Executor(int id, ServerSocket socketWithMonitor) throws IOException {
         this.id = id;
-        this.pipeFromMonitor = pipeFromMonitor;
-        this.pipeToMonitor = pipeToMonitor;
+        this.socketWithMonitor = socketWithMonitor.accept();
     }
 
     public void run() {
@@ -34,8 +33,8 @@ public abstract class Executor implements Runnable {
             log("started");
 
             // Set up object IO with Scheduler
-            this.objToMonitor = new ObjectOutputStream(pipeToMonitor);
-            this.objFromMonitor = new ObjectInputStream(pipeFromMonitor);
+            this.objToMonitor = new ObjectOutputStream(socketWithMonitor.getOutputStream());
+            this.objFromMonitor = new ObjectInputStream(socketWithMonitor.getInputStream());
 
             while(true) {
                 // Receive task specification from Scheduler
@@ -54,8 +53,7 @@ public abstract class Executor implements Runnable {
             e.printStackTrace();
         } finally {
             try {
-                pipeFromMonitor.close();
-                pipeToMonitor.close();
+                socketWithMonitor.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

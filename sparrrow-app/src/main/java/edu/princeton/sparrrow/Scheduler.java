@@ -1,6 +1,9 @@
 package edu.princeton.sparrrow;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,13 +19,11 @@ public class Scheduler implements Runnable {
     protected final int d;
 
     // IO streams to and from Frontend
-    private PipedInputStream pipeFromFe;
-    private PipedOutputStream pipeToFe;
+    private Socket socketWithFe;
     private ObjectOutputStream objToFe;
 
     // IO streams to and from ann node monitors
-    private ArrayList<PipedInputStream> pipesFromNodeMonitor;
-    private ArrayList<PipedOutputStream> pipesToNodeMonitor;
+    private ArrayList<Socket> socketsWithMonitors;
 
     private ArrayList<MonitorListener> monitorListeners;
     protected ArrayList<ObjectOutputStream> objToNodeMonitors;
@@ -35,23 +36,20 @@ public class Scheduler implements Runnable {
 
     protected int numMonitors;
 
-    public Scheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
-                     ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor, int d) {
+    public Scheduler(int id, ServerSocket socketWithFe, ArrayList<Socket> socketsWithMonitors, int d) throws IOException {
         this.id = id;
         this.d = d;
 
-        this.pipeFromFe = pipeFromFe;
-        this.pipeToFe = pipeToFe;
+        this.socketWithFe = socketWithFe.accept();
 
-        this.pipesFromNodeMonitor = pipesFromNodeMonitor;
-        this.pipesToNodeMonitor = pipesToNodeMonitor;
+        this.socketsWithMonitors = socketsWithMonitors;
 
         monitorListeners = new ArrayList<>();
         objToNodeMonitors = new ArrayList<>();
 
         jobs = new ConcurrentHashMap<>();
 
-        numMonitors = pipesFromNodeMonitor.size();
+        numMonitors = socketsWithMonitors.size();
         // set up the list of node monitor ids
         monitorIds = new ArrayList<>();
         for(int i = 0; i < numMonitors; i++) {
@@ -66,19 +64,19 @@ public class Scheduler implements Runnable {
         try {
 
             // Set up object IO with Frontend
-            this.objToFe = new ObjectOutputStream(pipeToFe);
-            FrontendListener frontendListener = new FrontendListener(pipeFromFe, this);
+            this.objToFe = new ObjectOutputStream(socketWithFe.getOutputStream());
+            FrontendListener frontendListener = new FrontendListener(socketWithFe.getInputStream(), this);
             frontendListener.start();
 
             // Set up object IO with NodeMonitors
             for (int i = 0; i < numMonitors; i++) {
                 // Create a listener for each Node Monitor
                 log("adding monitor listener " + i);
-                MonitorListener monitorListener = new MonitorListener(pipesFromNodeMonitor.get(i), this);
+                MonitorListener monitorListener = new MonitorListener(socketsWithMonitors.get(i), this);
                 monitorListeners.add(monitorListener);
 
                 // Create a obj stream to each Node Monitor
-                ObjectOutputStream objToMonitor = new ObjectOutputStream(pipesToNodeMonitor.get(i));
+                ObjectOutputStream objToMonitor = new ObjectOutputStream(socketsWithMonitors.get(i).getOutputStream());
                 objToNodeMonitors.add(objToMonitor);
             }
 

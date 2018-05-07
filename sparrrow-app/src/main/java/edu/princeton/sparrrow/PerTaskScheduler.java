@@ -1,16 +1,18 @@
 package edu.princeton.sparrrow;
 
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.UUID;
 
 public class PerTaskScheduler extends Scheduler {
         private HashMap<UUID, PendingTask> pendingTasks;
 
-        public PerTaskScheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
-                               ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor, int d) {
-            super(id, pipeFromFe, pipeToFe, pipesFromNodeMonitor, pipesToNodeMonitor, d);
+        public PerTaskScheduler(int id, ServerSocket socketWithFe, ArrayList<Socket> socketsWithMonitors, int d) throws IOException {
+            super(id, socketWithFe, socketsWithMonitors, d);
 
             pendingTasks = new HashMap<>();
         }

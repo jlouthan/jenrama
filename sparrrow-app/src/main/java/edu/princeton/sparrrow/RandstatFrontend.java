@@ -2,17 +2,14 @@ package edu.princeton.sparrrow;
 
 import org.json.JSONObject;
 
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.ArrayList;
+import java.net.Socket;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.UUID;
 
 public class RandstatFrontend extends Frontend {
 
-    public RandstatFrontend(int id, PipedInputStream pipeFromSched, PipedOutputStream pipeToSched){
-        super(id, pipeFromSched, pipeToSched);
+    public RandstatFrontend(int id, Socket socketWithSched){
+        super(id, socketWithSched);
     }
 
     protected Collection<Collection<String>> makeJobs() {

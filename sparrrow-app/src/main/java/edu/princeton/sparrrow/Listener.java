@@ -1,18 +1,18 @@
 package edu.princeton.sparrrow;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.PipedInputStream;
 
 public abstract class Listener extends Thread {
-    protected ObjectInputStream inputStream;
-    protected PipedInputStream pipeInputStream;
+    protected ObjectInputStream objInputStream;
+    protected InputStream socketInputStream;
 
     public void run() {
 
-        if (inputStream == null) {
+        if (objInputStream == null) {
             try {
-                inputStream = new ObjectInputStream(pipeInputStream);
+                objInputStream = new ObjectInputStream(socketInputStream);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -22,7 +22,7 @@ public abstract class Listener extends Thread {
 
         while (true) {
             try {
-                m = ((Message) inputStream.readObject()).getBody();
+                m = ((Message) objInputStream.readObject()).getBody();
                 handleMessage(m);
 
             } catch (IOException e) {

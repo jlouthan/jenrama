@@ -1,16 +1,16 @@
 package edu.princeton.sparrrow;
 
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.IntSummaryStatistics;
 import java.util.Random;
 
 
 public class RandstatExecutor extends Executor {
-    public RandstatExecutor(int id, PipedInputStream pipeFromMonitor, PipedOutputStream pipeToMonitor){
-        super(id, pipeFromMonitor, pipeToMonitor);
+    public RandstatExecutor(int id, ServerSocket socketWithMonitor) throws IOException {
+        super(id, socketWithMonitor);
     }
 
     protected TaskResultContent execute(TaskSpecContent s){

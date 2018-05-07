@@ -1,7 +1,8 @@
 package edu.princeton.sparrrow;
 
-import java.io.*;
-import java.lang.reflect.Array;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 
 /**
@@ -21,6 +22,10 @@ public class App {
             int n_executors = 3;
             int i;
 
+            int port0 = 32000;
+            int portCounter = 0;
+
+
             ArrayList<Scheduler> schedulers = new ArrayList<>();
             ArrayList<Frontend> fes = new ArrayList<>();
             ArrayList<NodeMonitor> monitors = new ArrayList<>();
@@ -28,67 +33,47 @@ public class App {
 
 
             // Initialize streams between Scheduler and NodeMonitor
-            ArrayList<PipedInputStream> monitorsIn = new ArrayList<>();
-            ArrayList<PipedInputStream> schedsIn = new ArrayList<>();
-            ArrayList<PipedOutputStream> monitorsOut = new ArrayList<>();
-            ArrayList<PipedOutputStream> schedsOut = new ArrayList<>();
+            ArrayList<Socket> schedSocketsToMonitor = new ArrayList<>();
+            ArrayList<ServerSocket> monitorSocketsToSched  = new ArrayList<>();
 
-
-            PipedOutputStream pipeOutSchedMonitor;
-            PipedInputStream pipeInSchedMonitor;
-            PipedOutputStream pipeOutMonitorSched;
-            PipedInputStream pipeInMonitorSched;
+            ServerSocket monitorSocket;
+            Socket schedSocket;
 
             // nf * ne total pipes
             // the pipe between scheduler i and monitor j is at index i*(ne) + j - 1
             for (i = 0; i < n_frontends * n_executors; i++){
-                pipeOutSchedMonitor = new PipedOutputStream();
-                pipeInSchedMonitor = new PipedInputStream(pipeOutSchedMonitor);
+                monitorSocket = new ServerSocket(port0 + portCounter);
+                schedSocket = new Socket("127.0.0.1", port0 + portCounter++);
 
-                pipeOutMonitorSched = new PipedOutputStream();
-                pipeInMonitorSched = new PipedInputStream(pipeOutMonitorSched);
-
-                monitorsIn.add(pipeInSchedMonitor);
-                monitorsOut.add(pipeOutMonitorSched);
-
-                schedsIn.add(pipeInMonitorSched);
-                schedsOut.add(pipeOutSchedMonitor);
+                schedSocketsToMonitor.add(schedSocket);
+                monitorSocketsToSched.add(monitorSocket);
             }
 
             // Initialize streams between Frontend and Scheduler
             // and create Frontends and Schedulers at the same time
-            PipedOutputStream pipeOutFeSched;
-            PipedInputStream pipeInFeSched;
 
-            PipedOutputStream pipeOutSchedFe;
-            PipedInputStream pipeInSchedFe;
+            ServerSocket schedSocketWithFe;
+            Socket feSocketWithSched;
 
-            ArrayList<PipedInputStream> mySchedsIn;
-            ArrayList<PipedOutputStream> mySchedsOut;
+            ArrayList<Socket> mySocketsWithMonitor;
             int j;
 
             Frontend fe;
             Scheduler sched;
             for (i = 0; i < n_frontends; i++){
-                pipeOutFeSched = new PipedOutputStream();
-                pipeInFeSched = new PipedInputStream(pipeOutFeSched);
 
-                pipeOutSchedFe = new PipedOutputStream();
-                pipeInSchedFe = new PipedInputStream(pipeOutSchedFe);
+                schedSocketWithFe = new ServerSocket(port0 + portCounter);
+                feSocketWithSched = new Socket("127.0.0.1", port0 + portCounter++);
 
-                fe = new RandstatFrontend(i, pipeInSchedFe, pipeOutFeSched);
+                fe = new RandstatFrontend(i, feSocketWithSched);
                 fes.add(fe);
 
-                mySchedsIn = new ArrayList<>();
-                mySchedsOut = new ArrayList<>();
+                mySocketsWithMonitor = new ArrayList<>();
                 for(j = 0; j < n_executors; j++){
-                    mySchedsIn.add(schedsIn.get(i * n_executors + j));
-                    mySchedsOut.add(schedsOut.get(i * n_executors + j));
+                    mySocketsWithMonitor.add(schedSocketsToMonitor.get(i * n_executors + j));
                 }
 
-
-                sched = new Scheduler(i, pipeInFeSched, pipeOutSchedFe,
-                        mySchedsIn, mySchedsOut, 2);
+                sched = new Scheduler(i, schedSocketWithFe, mySocketsWithMonitor, 2);
                 schedulers.add(sched);
             }
 
@@ -96,36 +81,26 @@ public class App {
 
             // Initialize streams between NodeMonitor and Executor
             // and create Executors and Nodemonitors at the same time
-            PipedOutputStream pipeOutMonitorExec;
-            PipedInputStream pipeInMonitorExec;
 
-            PipedOutputStream pipeOutExecMonitor;
-            PipedInputStream pipeInExecMonitor;
+            Socket monitorSocketWithExec;
+            ServerSocket execSocketWithMonitor;
 
-            ArrayList<PipedInputStream> myMonitorsIn;
-            ArrayList<PipedOutputStream> myMonitorsOut;
+            ArrayList<ServerSocket> mySocketsWithSched;
 
             Executor ex;
             for(i = 0; i < n_executors; i++){
-                pipeOutMonitorExec = new PipedOutputStream();
-                pipeInMonitorExec = new PipedInputStream(pipeOutMonitorExec);
+                execSocketWithMonitor = new ServerSocket(port0 + portCounter);
+                monitorSocketWithExec = new Socket("127.0.0.1", port0 + portCounter++);
 
-                // Initialize streams between Executor and NodeMonitor
-                pipeOutExecMonitor = new PipedOutputStream();
-                pipeInExecMonitor = new PipedInputStream(pipeOutExecMonitor);
-
-                ex = new RandstatExecutor(i, pipeInMonitorExec, pipeOutExecMonitor);
+                ex = new RandstatExecutor(i, execSocketWithMonitor);
                 executors.add(ex);
 
-                myMonitorsIn = new ArrayList<>();
-                myMonitorsOut = new ArrayList<>();
+                mySocketsWithSched = new ArrayList<>();
                 for(j = 0; j < n_frontends; j++){
-                    myMonitorsIn.add(monitorsIn.get(i + n_executors * j));
-                    myMonitorsOut.add(monitorsOut.get(i + n_executors * j));
+                    mySocketsWithSched.add(monitorSocketsToSched.get(i + n_executors * j));
                 }
 
-                NodeMonitor monitor = new NodeMonitor(i, myMonitorsIn, myMonitorsOut,
-                        pipeInExecMonitor, pipeOutMonitorExec);
+                NodeMonitor monitor = new NodeMonitor(i, mySocketsWithSched, monitorSocketWithExec);
                 monitors.add(monitor);
             }
 
@@ -167,7 +142,8 @@ public class App {
             }
 
         } catch (IOException e){
-            System.out.println("oops");
+            e.printStackTrace();
+            System.out.println("App broke");
         }
 
     }

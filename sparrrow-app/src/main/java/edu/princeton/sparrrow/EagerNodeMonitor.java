@@ -2,8 +2,8 @@ package edu.princeton.sparrrow;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -16,9 +16,8 @@ import java.util.Queue;
 public class EagerNodeMonitor extends NodeMonitor {
     private Queue<TaskSpecContent> taskQueue;
 
-    public EagerNodeMonitor(int id, ArrayList<PipedInputStream> pipesFromScheds, ArrayList<PipedOutputStream> pipesToScheds,
-                            PipedInputStream pipeFromExec, PipedOutputStream pipeToExec) throws IOException {
-        super(id, pipesFromScheds, pipesToScheds, pipeFromExec, pipeToExec);
+    public EagerNodeMonitor(int id, ArrayList<ServerSocket> socketsWithScheds, Socket socketWithExec) throws IOException {
+        super(id, socketsWithScheds, socketWithExec);
         this.taskQueue = new LinkedList<>();
     }
 

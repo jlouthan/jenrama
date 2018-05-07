@@ -1,9 +1,9 @@
 package edu.princeton.sparrrow;
 
-import org.json.JSONObject;
-
-import java.io.*;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.UUID;
@@ -16,25 +16,23 @@ public abstract class Frontend implements Runnable {
 
     private final int id;
 
-    private PipedInputStream pipeFromSched;
-    private PipedOutputStream pipeToSched;
+    private Socket socketWithSched;
 
     private ObjectInputStream objFromSched;
     private ObjectOutputStream objToSched;
 
     private HashSet<UUID> pendingJobs = new HashSet();
 
-    public Frontend(int id, PipedInputStream pipeFromSched, PipedOutputStream pipeToSched){
+    public Frontend(int id, Socket socketWithSched){
         this.id = id;
-        this.pipeFromSched = pipeFromSched;
-        this.pipeToSched = pipeToSched;
+        this.socketWithSched = socketWithSched;
     }
 
     public void run() {
         try {
             // Set up IO streams with Scheduler
-            this.objToSched = new ObjectOutputStream(pipeToSched);
-            this.objFromSched = new ObjectInputStream(pipeFromSched);
+            this.objToSched = new ObjectOutputStream(socketWithSched.getOutputStream());
+            this.objFromSched = new ObjectInputStream(socketWithSched.getInputStream());
 
             log("started");
 

@@ -1,14 +1,13 @@
 package edu.princeton.sparrrow;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.PipedInputStream;
+import java.net.Socket;
 
 public class MonitorListener extends Listener {
     private Scheduler parent;
 
-    public MonitorListener(PipedInputStream pipeFromMonitor, Scheduler parent) throws IOException {
-        super.pipeInputStream = pipeFromMonitor;
+    public MonitorListener(Socket socketFromMonitor, Scheduler parent) throws IOException {
+        super.socketInputStream = socketFromMonitor.getInputStream();
         this.parent = parent;
     }
 

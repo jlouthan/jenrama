@@ -1,16 +1,15 @@
 package edu.princeton.sparrrow;
 
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
 public class RandomScheduler extends Scheduler {
-    public RandomScheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
-                           ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor, int d) {
-        super(id, pipeFromFe, pipeToFe, pipesFromNodeMonitor, pipesToNodeMonitor, d);
+    public RandomScheduler(int id, ServerSocket socketWithFe, ArrayList<Socket> socketsWithMonitors, int d) throws IOException {
+        super(id, socketWithFe, socketsWithMonitors, d);
     }
 
     @Override

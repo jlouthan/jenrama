@@ -1,7 +1,6 @@
 package edu.princeton.sparrrow;
 
 import java.util.UUID;
-import org.json.JSONObject;
 
 public class TaskResultContent extends MessageContent {
     private final UUID jobID;

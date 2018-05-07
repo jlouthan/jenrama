@@ -1,14 +1,14 @@
 package edu.princeton.sparrrow;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.PipedInputStream;
 
 public class FrontendListener extends Listener {
     private Scheduler parent;
 
-    public FrontendListener (PipedInputStream pipeFromFrontend, Scheduler parent) throws IOException {
-        super.inputStream = new ObjectInputStream(pipeFromFrontend);
+    public FrontendListener (InputStream socketFromFrontend, Scheduler parent) throws IOException {
+        super.objInputStream = new ObjectInputStream(socketFromFrontend);
         this.parent = parent;
     }
 

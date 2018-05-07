@@ -1,6 +1,9 @@
 package edu.princeton.sparrrow;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -16,31 +19,31 @@ public class NodeMonitor implements Runnable {
     private Queue<ProbeContent> probeQueue;
 
     // IO streams to and from Schedulers
-    private ArrayList<PipedInputStream> pipesFromScheds;
-    private ArrayList<PipedOutputStream> pipesToScheds;
+    private ArrayList<Socket> socketsWithScheds;
     protected ArrayList<ObjectOutputStream> objsToScheds;
     private ArrayList<SchedListener> schedListeners;
 
     // IO streams to and from Executor
-    private PipedInputStream pipeFromExec;
-    private PipedOutputStream pipeToExec;
+    private Socket socketWithExec;
     protected ObjectOutputStream objToExec;
 
-    public NodeMonitor(int id, ArrayList<PipedInputStream> pipesFromScheds, ArrayList<PipedOutputStream> pipesToScheds,
-                       PipedInputStream pipeFromExec, PipedOutputStream pipeToExec) throws IOException {
+    public NodeMonitor(int id, ArrayList<ServerSocket> socketsWithScheds, Socket socketWithExec) throws IOException {
 
         this.id = id;
         this.executor_is_occupied = false;
         this.probeQueue = new LinkedList<>();
 
-        this.pipesFromScheds = pipesFromScheds;
-        this.pipesToScheds = pipesToScheds;
+        this.socketsWithScheds = new ArrayList<>();
+        for(ServerSocket ss: socketsWithScheds){
+            this.socketsWithScheds.add(ss.accept());
+        }
+
         this.objsToScheds = new ArrayList<>();
 
         this.schedListeners = new ArrayList<>();
 
-        this.pipeFromExec = pipeFromExec;
-        this.pipeToExec = pipeToExec;
+        this.socketWithExec = socketWithExec;
+
     }
 
     public void run() {
@@ -48,13 +51,13 @@ public class NodeMonitor implements Runnable {
             log("started");
 
             // Set up object IO and listener with Schedulers
-            int numSchedulers = this.pipesFromScheds.size();
+            int numSchedulers = this.socketsWithScheds.size();
             log("adding obj output streams and sched listeners");
             for (int i = 0; i < numSchedulers; i++) {
-                ObjectOutputStream objToSched = new ObjectOutputStream(pipesToScheds.get(i));
+                ObjectOutputStream objToSched = new ObjectOutputStream(socketsWithScheds.get(i).getOutputStream());
                 this.objsToScheds.add(objToSched);
 
-                SchedListener schedListener = new SchedListener(pipesFromScheds.get(i), this);
+                SchedListener schedListener = new SchedListener(socketsWithScheds.get(i).getInputStream(), this);
                 this.schedListeners.add(schedListener);
             }
 
@@ -65,10 +68,10 @@ public class NodeMonitor implements Runnable {
             }
 
             // Set up object IO with Executor
-            this.objToExec = new ObjectOutputStream(pipeToExec);
+            this.objToExec = new ObjectOutputStream(socketWithExec.getOutputStream());
 
             // Start listening to Executor
-            ExecutorListener executorListener = new ExecutorListener(pipeFromExec, this);
+            ExecutorListener executorListener = new ExecutorListener(socketWithExec.getInputStream(), this);
             log("starting executor listener");
             executorListener.start();
 

@@ -2,14 +2,13 @@ package edu.princeton.sparrrow;
 
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.PipedInputStream;
+import java.io.InputStream;
 
 public class SchedListener extends Listener {
     private NodeMonitor parent;
 
-    public SchedListener(PipedInputStream pipeFromSched, NodeMonitor parent) throws IOException {
-        super.pipeInputStream = pipeFromSched;
+    public SchedListener(InputStream socketFromSched, NodeMonitor parent) throws IOException {
+        super.socketInputStream = socketFromSched;
         this.parent = parent;
     }
 

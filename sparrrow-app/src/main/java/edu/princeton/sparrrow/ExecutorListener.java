@@ -2,14 +2,14 @@ package edu.princeton.sparrrow;
 
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.PipedInputStream;
 
 public class ExecutorListener extends Listener {
     private NodeMonitor parent;
 
-    public ExecutorListener(PipedInputStream pipeFromExecutor, NodeMonitor parent) throws IOException {
-        super.inputStream = new ObjectInputStream(pipeFromExecutor);
+    public ExecutorListener(InputStream socketFromExecutor, NodeMonitor parent) throws IOException {
+        super.objInputStream = new ObjectInputStream(socketFromExecutor);
         this.parent = parent;
     }
 

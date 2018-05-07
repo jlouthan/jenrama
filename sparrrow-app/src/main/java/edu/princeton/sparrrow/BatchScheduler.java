@@ -1,17 +1,15 @@
 package edu.princeton.sparrrow;
 
-import javax.management.monitor.Monitor;
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 
 public class BatchScheduler extends Scheduler {
     private HashMap<UUID, PendingJob> pendingJobs;
 
-    public BatchScheduler(int id, PipedInputStream pipeFromFe, PipedOutputStream pipeToFe,
-                          ArrayList<PipedInputStream> pipesFromNodeMonitor, ArrayList<PipedOutputStream> pipesToNodeMonitor, int d) {
-        super(id, pipeFromFe, pipeToFe, pipesFromNodeMonitor, pipesToNodeMonitor, d);
+    public BatchScheduler(int id, ServerSocket socketWithFe, ArrayList<Socket> socketsWithMonitors, int d) throws IOException {
+        super(id, socketWithFe, socketsWithMonitors, d);
 
         pendingJobs = new HashMap<>();
     }
