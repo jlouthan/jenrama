@@ -25,6 +25,7 @@ public class CreateScheduler {
         int schedId = 0;
         int numMonitors = SparrrowConf.N_EXECUTORS;
         int numScheds = SparrrowConf.N_FRONTENDS;
+        String workerHost = SparrrowConf.WORKER_HOST;
 
         // read in provided command line arguments
         if (args.length > 0) {
@@ -33,6 +34,9 @@ public class CreateScheduler {
                 numMonitors = Integer.parseInt(args[1]);
                 if (args.length > 2) {
                     numScheds = Integer.parseInt(args[2]);
+                    if (args.length > 3) {
+                        workerHost = args[3];
+                    }
                 }
             }
         }
@@ -62,7 +66,7 @@ public class CreateScheduler {
 
             // There is one frontend with the scheduler & the scheduler has a socket to talk to it
             ServerSocket schedSocketWithFe = new ServerSocket(port0_sched + schedId);
-            Socket feSocketWithSched = new Socket("127.0.0.1", port0_sched + schedId);
+            Socket feSocketWithSched = new Socket(workerHost, port0_sched + schedId);
 
             Frontend frontend = new RandstatFrontend(schedId, feSocketWithSched);
             Scheduler scheduler = new Scheduler(schedId, schedSocketWithFe, schedSocketsWithMonitor, SparrrowConf.D);
