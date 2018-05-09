@@ -55,6 +55,9 @@ public class PerTaskScheduler extends Scheduler {
                 for(int monitorId : myMonitors){
                     log("sending task probe to monitor " + monitorId + "(taskId = " + taskId + ")");
                     objToNodeMonitors.get(monitorId).writeObject(probeMessage);
+
+                    // increment stats for probes
+                    job.probeStats.incrementCount(monitorId);
                 }
             }
         }
@@ -100,6 +103,10 @@ public class PerTaskScheduler extends Scheduler {
                 // Send the task to my favorite monitor
                 Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
                 objToNodeMonitors.get(bestMonitor).writeObject(spec);
+
+                // increment stats for specs
+                Job job = jobs.get(jobId);
+                job.specStats.incrementCount(monitorId);
             }
         }
 

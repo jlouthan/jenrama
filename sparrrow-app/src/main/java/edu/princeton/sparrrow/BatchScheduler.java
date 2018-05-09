@@ -51,6 +51,9 @@ public class BatchScheduler extends Scheduler {
         for(int monitorId : myMonitors){
             log("sending job probe to monitor " + monitorId + "(jobId = " + jobId + ")");
             objToNodeMonitors.get(monitorId).writeObject(probeMessage);
+
+            // increment stats for probes
+            job.probeStats.incrementCount(monitorId);
         }
     }
 
@@ -103,6 +106,10 @@ public class BatchScheduler extends Scheduler {
                 objToNodeMonitors.get(destId).writeObject(spec);
 
                 log("Sending spec for task " + taskId + "to NodeMonitor " + destId);
+
+                // increment stats for specs
+                Job job = jobs.get(jobId);
+                job.specStats.incrementCount(destId);
 
             }
 

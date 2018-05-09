@@ -36,6 +36,9 @@ public class RandomScheduler extends Scheduler {
             objToNodeMonitors.get(myMonitor).writeObject(task);
 
             log("sending task (" + taskId + ") to NodeMonitor " + myMonitor);
+
+            // increment stats for specs
+            j.specStats.incrementCount(myMonitor);
         }
 
 

@@ -113,8 +113,8 @@ public class Scheduler implements Runnable {
 
         // Variables for statistics
         private Stopwatch stopwatch;
-        private Stats probeStats;
-        private Stats specStats;
+        protected Stats probeStats;
+        protected Stats specStats;
 
         // Create a new job with no task results yet
         public Job(int frontendId, Collection<String> tasksRemaining) {
@@ -166,8 +166,10 @@ public class Scheduler implements Runnable {
             Message probeMessage = new Message(MessageType.PROBE, probe);
 
             log("sending probe to monitor " + monitorId);
-            j.probeStats.incrementCount(monitorId);
             objToNodeMonitors.get(monitorId).writeObject(probeMessage);
+
+            // increment stats for probes
+            j.probeStats.incrementCount(monitorId);
         }
 
     }
@@ -192,9 +194,11 @@ public class Scheduler implements Runnable {
             taskSpec = new TaskSpecContent(jobId, null, this.id, null);
         } else {
             log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
-            j.specStats.incrementCount(monitorId);
             // Create one task spec to pass to node monitor
             taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
+
+            // only increment stats for true specs sent
+            j.specStats.incrementCount(monitorId);
         }
         Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
         objToNodeMonitors.get(monitorId).writeObject(spec);
