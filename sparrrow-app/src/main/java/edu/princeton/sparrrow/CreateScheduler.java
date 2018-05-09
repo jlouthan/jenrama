@@ -59,14 +59,14 @@ public class CreateScheduler {
                 // each worker uses (num_scheds + 1) ports: 1 per sched and 1 for the executor
                 int monitorPortOffset = i * (numScheds + 1) + schedId;
                 System.out.println("Trying to create socket with port " + (port0 + monitorPortOffset));
-                schedSocket = new Socket("127.0.0.1", port0 + monitorPortOffset);
+                schedSocket = new Socket(workerHost, port0 + monitorPortOffset);
                 System.out.println("created socket with port " + (port0 + monitorPortOffset));
                 schedSocketsWithMonitor.add(schedSocket);
             }
 
             // There is one frontend with the scheduler & the scheduler has a socket to talk to it
             ServerSocket schedSocketWithFe = new ServerSocket(port0_sched + schedId);
-            Socket feSocketWithSched = new Socket(workerHost, port0_sched + schedId);
+            Socket feSocketWithSched = new Socket("127.0.0.1", port0_sched + schedId);
 
             Frontend frontend = new RandstatFrontend(schedId, feSocketWithSched);
             Scheduler scheduler = new Scheduler(schedId, schedSocketWithFe, schedSocketsWithMonitor, SparrrowConf.D);
