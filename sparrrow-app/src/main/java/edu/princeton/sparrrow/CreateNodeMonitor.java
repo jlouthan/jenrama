@@ -7,36 +7,47 @@ import java.util.ArrayList;
 
 /**
  * Creates and Launches a single worker daemon: 1 node monitor and 1 instance of our executor
+ *
+ * usage:  java CreateWorker workerId numMonitors numSchedulers
+ *  * all args will are optional and will be set to defaults in SparrrowConf otherwise
+ *
+ *  Note:  Workers should be created before schedulers so that the server sockets are ready for client connections
  */
 
 public class CreateNodeMonitor {
 
     public static void main( String[] args ) {
-        System.out.println("Starting Node Monitor");
 
-        // TODO replace with command line input or default to config value
         final int port0 = SparrrowConf.PORT_0;
 
-        // TODO replace with command line input or default to config value??
-        final int num_scheds = SparrrowConf.N_FRONTENDS;
-        final int num_monitors = SparrrowConf.N_EXECUTORS;
+        int workerId = 0;
+        int numMonitors = SparrrowConf.N_EXECUTORS;
+        int numScheds = SparrrowConf.N_FRONTENDS;
 
-        System.out.println("Listening to " + num_scheds + " schedulers");
+        // read in provided command line arguments
+        if (args.length > 0) {
+            workerId = Integer.parseInt(args[0]);
+            if (args.length > 1) {
+                numMonitors = Integer.parseInt(args[1]);
+                if (args.length > 2) {
+                    numScheds = Integer.parseInt(args[2]);
+                }
+            }
+        }
 
-        // TODO replace with command line input
-        final int worker_id = 0;
+        System.out.println("Starting Worker " + workerId + " listening to " + numScheds + " schedulers");
 
         try{
 
             // The ith worker has ports starting at (port0 + (worker_id * (num_scheds + 1)))
-            int portCounter = worker_id * (num_scheds + 1);
+            int portCounter = workerId * (numScheds + 1);
 
             // Initialize sockets between this monitor and all schedulers
             ArrayList<ServerSocket> monitorSocketsWithSched  = new ArrayList<>();
             ServerSocket monitorSocket;
 
             // The monitor has a socket for each scheduler to use
-            for (int i = 0; i < num_scheds; i++){
+            for (int i = 0; i < numScheds; i++){
                 monitorSocket = new ServerSocket(port0 + portCounter);
                 monitorSocketsWithSched.add(monitorSocket);
                 portCounter++;
@@ -46,8 +57,8 @@ public class CreateNodeMonitor {
             ServerSocket execSocketWithMonitor = new ServerSocket(port0 + portCounter);
             Socket monitorSocketWithExec = new Socket("127.0.0.1", port0 + portCounter);
 
-            Executor executor = new RandstatExecutor(worker_id, execSocketWithMonitor);
-            NodeMonitor monitor = new NodeMonitor(worker_id, monitorSocketsWithSched, monitorSocketWithExec);
+            Executor executor = new RandstatExecutor(workerId, execSocketWithMonitor);
+            NodeMonitor monitor = new NodeMonitor(workerId, monitorSocketsWithSched, monitorSocketWithExec);
 
             ArrayList<Thread> allThreads = new ArrayList<>();
 

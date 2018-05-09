@@ -46,6 +46,7 @@ public class NodeMonitor implements Runnable {
         try {
             log("started");
 
+            // This will block until all the expected schedulers connect to their respective sockets
             for(ServerSocket ss: socketsWithSchedsWaiting){
                 log("trying to accept");
                 this.socketsWithScheds.add(ss.accept());
