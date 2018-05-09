@@ -209,9 +209,10 @@ public class Scheduler implements Runnable {
         // if task is finished, return result to frontend
         if (job.isComplete()) {
             double responseTime = job.stopwatch.elapsedTime();
-            writer.println(jobId + " " + responseTime);
-            writer.println(" probes: " + job.probeStats);
-            writer.println("  specs: " + job.specStats);
+            writer.println(jobId);
+            writer.println(" [response time] " + responseTime);
+            writer.println(" [nm p s]");
+            writer.println(Stats.stringStats(job.probeStats, job.specStats));
             writer.flush();
 
             log("received task result from NodeMonitor, sending job result to Frontend");
