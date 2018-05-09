@@ -26,6 +26,10 @@ public class BatchScheduler extends Scheduler {
         jobs.put(m.getJobID(), job);
         log(id + " received job spec from Frontend");
 
+        // initialize stats
+        job.probeStats = new Stats(jobId.toString());
+        job.specStats = new Stats(jobId.toString());
+
         ArrayList<Integer> myMonitors;
 
         int j;

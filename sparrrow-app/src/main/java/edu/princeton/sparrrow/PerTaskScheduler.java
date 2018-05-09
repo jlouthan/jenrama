@@ -26,8 +26,13 @@ public class PerTaskScheduler extends Scheduler {
             ArrayList<String> taskSpecs = new ArrayList<>(m.getTasks());
 
             Job job = new Job(m.getFrontendID(), m.getTasks());
-            jobs.put(m.getJobID(), job);
+            UUID jobId = m.getJobID();
+            jobs.put(jobId, job);
             log(id + " received job spec from Frontend");
+
+            // initialize stats
+            job.probeStats = new Stats(jobId.toString());
+            job.specStats = new Stats(jobId.toString());
 
             ArrayList<Integer> myMonitors;
             UUID taskId;

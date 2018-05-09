@@ -152,8 +152,11 @@ public class Scheduler implements Runnable {
         jobs.put(jobId, j);
 
         log("received job spec from Frontend");
+
+        // initialize stats
         j.probeStats = new Stats(jobId.toString());
         j.specStats = new Stats(jobId.toString());
+
         // Randomize node monitor ids to choose which to place tasks on
         Collections.shuffle(monitorIds);
 
