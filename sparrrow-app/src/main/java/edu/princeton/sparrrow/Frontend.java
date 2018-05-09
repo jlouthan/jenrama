@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public abstract class Frontend implements Runnable {
 
-    private final int id;
+    protected final int id;
 
     private Socket socketWithSched;
 
@@ -30,12 +30,12 @@ public abstract class Frontend implements Runnable {
 
     public void run() {
         try {
+
             // Set up IO streams with Scheduler
             this.objToSched = new ObjectOutputStream(socketWithSched.getOutputStream());
             this.objFromSched = new ObjectInputStream(socketWithSched.getInputStream());
 
             log("started");
-
 
             UUID job_id;
             JobSpecContent j;

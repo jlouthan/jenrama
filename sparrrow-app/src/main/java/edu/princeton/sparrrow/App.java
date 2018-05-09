@@ -18,13 +18,8 @@ public class App {
 
         try{
 
-            int n_frontends = 2;
-            int n_executors = 3;
             int i;
-
-            int port0 = 32000;
             int portCounter = 0;
-
 
             ArrayList<Scheduler> schedulers = new ArrayList<>();
             ArrayList<Frontend> fes = new ArrayList<>();
@@ -41,9 +36,9 @@ public class App {
 
             // nf * ne total pipes
             // the pipe between scheduler i and monitor j is at index i*(ne) + j - 1
-            for (i = 0; i < n_frontends * n_executors; i++){
-                monitorSocket = new ServerSocket(port0 + portCounter);
-                schedSocket = new Socket("127.0.0.1", port0 + portCounter++);
+            for (i = 0; i < SparrrowConf.N_FRONTENDS * SparrrowConf.N_EXECUTORS; i++){
+                monitorSocket = new ServerSocket(SparrrowConf.PORT_0 + portCounter);
+                schedSocket = new Socket("127.0.0.1", SparrrowConf.PORT_0 + portCounter++);
 
                 schedSocketsToMonitor.add(schedSocket);
                 monitorSocketsToSched.add(monitorSocket);
@@ -60,20 +55,20 @@ public class App {
 
             Frontend fe;
             Scheduler sched;
-            for (i = 0; i < n_frontends; i++){
+            for (i = 0; i < SparrrowConf.N_FRONTENDS; i++){
 
-                schedSocketWithFe = new ServerSocket(port0 + portCounter);
-                feSocketWithSched = new Socket("127.0.0.1", port0 + portCounter++);
+                schedSocketWithFe = new ServerSocket(SparrrowConf.PORT_0 + portCounter);
+                feSocketWithSched = new Socket("127.0.0.1", SparrrowConf.PORT_0 + portCounter++);
 
                 fe = new RandstatFrontend(i, feSocketWithSched);
                 fes.add(fe);
 
                 mySocketsWithMonitor = new ArrayList<>();
-                for(j = 0; j < n_executors; j++){
-                    mySocketsWithMonitor.add(schedSocketsToMonitor.get(i * n_executors + j));
+                for(j = 0; j < SparrrowConf.N_EXECUTORS; j++){
+                    mySocketsWithMonitor.add(schedSocketsToMonitor.get(i * SparrrowConf.N_EXECUTORS + j));
                 }
 
-                sched = new Scheduler(i, schedSocketWithFe, mySocketsWithMonitor, 2);
+                sched = new Scheduler(i, schedSocketWithFe, mySocketsWithMonitor, SparrrowConf.D);
                 schedulers.add(sched);
             }
 
@@ -88,16 +83,16 @@ public class App {
             ArrayList<ServerSocket> mySocketsWithSched;
 
             Executor ex;
-            for(i = 0; i < n_executors; i++){
-                execSocketWithMonitor = new ServerSocket(port0 + portCounter);
-                monitorSocketWithExec = new Socket("127.0.0.1", port0 + portCounter++);
+            for(i = 0; i < SparrrowConf.N_EXECUTORS; i++){
+                execSocketWithMonitor = new ServerSocket(SparrrowConf.PORT_0 + portCounter);
+                monitorSocketWithExec = new Socket("127.0.0.1", SparrrowConf.PORT_0 + portCounter++);
 
                 ex = new RandstatExecutor(i, execSocketWithMonitor);
                 executors.add(ex);
 
                 mySocketsWithSched = new ArrayList<>();
-                for(j = 0; j < n_frontends; j++){
-                    mySocketsWithSched.add(monitorSocketsToSched.get(i + n_executors * j));
+                for(j = 0; j < SparrrowConf.N_FRONTENDS; j++){
+                    mySocketsWithSched.add(monitorSocketsToSched.get(i + SparrrowConf.N_EXECUTORS * j));
                 }
 
                 NodeMonitor monitor = new NodeMonitor(i, mySocketsWithSched, monitorSocketWithExec);
