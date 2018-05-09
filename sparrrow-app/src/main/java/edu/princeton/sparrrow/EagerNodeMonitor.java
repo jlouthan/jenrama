@@ -28,7 +28,7 @@ public class EagerNodeMonitor extends NodeMonitor {
 
         log("sending probe reply for job " + pc.getJobID() + " to scheduler " + destination_scheduler);
 
-        // Send probe reply to (request task spec from) scheduler
+        // Send probe reply with queue length to scheduler
         DetailedProbeReplyContent probeReply = new DetailedProbeReplyContent(pc.getJobID(), this.id, queue_len);
         Message m = new Message(MessageType.PROBE_REPLY, probeReply);
         objToSched.writeObject(m);

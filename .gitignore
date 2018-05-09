@@ -6,3 +6,4 @@ sparrrow-app/target/
 *.pyc
 .idea/
 sparrrow-app/sparrrow-app.iml
+sparrrow-app/logs/*

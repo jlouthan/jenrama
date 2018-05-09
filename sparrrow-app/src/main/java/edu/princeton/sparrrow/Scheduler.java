@@ -2,6 +2,7 @@ package edu.princeton.sparrrow;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -28,13 +29,15 @@ public class Scheduler implements Runnable {
     private ArrayList<MonitorListener> monitorListeners;
     protected ArrayList<ObjectOutputStream> objToNodeMonitors;
 
-    // data structure for storing state of jobs in flight
+    // data structure for storing state of all jobs ever submitted
     protected ConcurrentHashMap<UUID, Job> jobs;
 
     // list of node monitor ids that will be shuffled to determine where to place task probes
     protected List<Integer> monitorIds;
 
     protected int numMonitors;
+
+    private PrintWriter writer;
 
     public Scheduler(int id, ServerSocket socketWithFe, ArrayList<Socket> socketsWithMonitors, int d) throws IOException {
         this.id = id;
@@ -56,6 +59,8 @@ public class Scheduler implements Runnable {
             monitorIds.add(i);
         }
 
+        // Create a log file (overwrites any existing file with the given name)
+        this.writer = new PrintWriter("logs/scheduler-" + this.id + ".log", "UTF-8");
 
     }
 
@@ -105,13 +110,15 @@ public class Scheduler implements Runnable {
         private LinkedList<String> tasksRemaining;
         private ArrayList<String> taskResults;
         protected int numTasks;
+        private Stopwatch stopwatch;
 
         // Create a new job with no task results yet
         public Job(int frontendId, Collection<String> tasksRemaining) {
             this.frontendId = frontendId;
             this.tasksRemaining = (LinkedList) tasksRemaining;
             this.taskResults = new ArrayList<>();
-            numTasks = tasksRemaining.size();
+            this.numTasks = tasksRemaining.size();
+            this.stopwatch = new Stopwatch();
         }
 
         public String getNextTaskRemaining() {
@@ -133,11 +140,11 @@ public class Scheduler implements Runnable {
         Job j = new Job(m.getFrontendID(), m.getTasks());
         jobs.put(m.getJobID(), j);
 
-        log(id + " received job spec from Frontend");
+        log("received job spec from Frontend");
         // Randomize node monitor ids to choose which to place tasks on
         Collections.shuffle(monitorIds);
 
-        log(this.id + " d * m is: " + d * j.numTasks);
+        log("d * m is: " + d * j.numTasks);
         // Send reservations (probes) to d*m selected node monitors
         for (int i = 0; i < d * j.numTasks; i++) {
             int monitorId = monitorIds.get(i % numMonitors);
@@ -185,6 +192,10 @@ public class Scheduler implements Runnable {
 
         // if task is finished, return result to frontend
         if (job.isComplete()) {
+            double responseTime = job.stopwatch.elapsedTime();
+            writer.println(jobId + " " + responseTime);
+            writer.flush();
+
             log("received task result from NodeMonitor, sending job result to Frontend");
             JobResultContent newMessage = new JobResultContent(jobId, job.taskResults);
 
