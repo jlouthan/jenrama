@@ -1,5 +1,6 @@
 package edu.princeton.sparrrow;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -60,7 +61,9 @@ public class Scheduler implements Runnable {
         }
 
         // Create a log file (overwrites any existing file with the given name)
-        this.writer = new PrintWriter("logs/scheduler-" + this.id + ".log", "UTF-8");
+        File file = new File("logs/scheduler-" + this.id + ".log");
+        file.getParentFile().mkdirs();
+        this.writer = new PrintWriter(file, "UTF-8");
 
     }
 
