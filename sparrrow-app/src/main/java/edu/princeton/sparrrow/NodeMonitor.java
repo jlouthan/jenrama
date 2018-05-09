@@ -20,6 +20,7 @@ public class NodeMonitor implements Runnable {
 
     // IO streams to and from Schedulers
     private ArrayList<Socket> socketsWithScheds;
+    private ArrayList<ServerSocket> socketsWithSchedsWaiting;
     protected ArrayList<ObjectOutputStream> objsToScheds;
     private ArrayList<SchedListener> schedListeners;
 
@@ -27,28 +28,28 @@ public class NodeMonitor implements Runnable {
     private Socket socketWithExec;
     protected ObjectOutputStream objToExec;
 
-    public NodeMonitor(int id, ArrayList<ServerSocket> socketsWithScheds, Socket socketWithExec) throws IOException {
-
+    public NodeMonitor(int id, ArrayList<ServerSocket> socketsWithSchedsWaiting, Socket socketWithExec) throws IOException {
         this.id = id;
         this.executor_is_occupied = false;
         this.probeQueue = new LinkedList<>();
-
+        this.socketsWithSchedsWaiting = socketsWithSchedsWaiting;
         this.socketsWithScheds = new ArrayList<>();
-        for(ServerSocket ss: socketsWithScheds){
-            this.socketsWithScheds.add(ss.accept());
-        }
 
         this.objsToScheds = new ArrayList<>();
 
         this.schedListeners = new ArrayList<>();
 
         this.socketWithExec = socketWithExec;
-
     }
 
     public void run() {
         try {
             log("started");
+
+            for(ServerSocket ss: socketsWithSchedsWaiting){
+                log("trying to accept");
+                this.socketsWithScheds.add(ss.accept());
+            }
 
             // Set up object IO and listener with Schedulers
             int numSchedulers = this.socketsWithScheds.size();
