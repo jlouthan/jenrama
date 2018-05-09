@@ -1,5 +1,6 @@
 package edu.princeton.sparrrow;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -60,7 +61,9 @@ public class Scheduler implements Runnable {
         }
 
         // Create a log file (overwrites any existing file with the given name)
-        this.writer = new PrintWriter("logs/scheduler-" + this.id + ".log", "UTF-8");
+        File file = new File("logs/scheduler-" + this.id + ".log");
+        file.getParentFile().mkdirs();
+        this.writer = new PrintWriter(file, "UTF-8");
 
     }
 
@@ -215,9 +218,11 @@ public class Scheduler implements Runnable {
 
         // if task is finished, return result to frontend
         if (job.isComplete()) {
+            // Log statistics
             double responseTime = job.stopwatch.elapsedTime();
             writer.println(jobId);
             writer.println(" [response time] " + responseTime);
+            writer.println(" [number of tasks] " + job.numTasks);
             writer.println(" [nm p s]");
             writer.println(Stats.stringStats(job.probeStats, job.specStats));
             writer.flush();
