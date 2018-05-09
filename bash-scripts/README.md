@@ -1,0 +1,1 @@
+## Make sure you've run `mvn package` in the proper sparrrow app directory to bring the class files up to date before running any of these bash scripts.
