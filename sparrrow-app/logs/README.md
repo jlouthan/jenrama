@@ -1,0 +1,1 @@
+## This folder stores logs that are ignored by git
