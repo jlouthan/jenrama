@@ -110,7 +110,11 @@ public class Scheduler implements Runnable {
         private LinkedList<String> tasksRemaining;
         private ArrayList<String> taskResults;
         protected int numTasks;
+
+        // Variables for statistics
         private Stopwatch stopwatch;
+        private Stats probeStats;
+        private Stats specStats;
 
         // Create a new job with no task results yet
         public Job(int frontendId, Collection<String> tasksRemaining) {
@@ -118,7 +122,10 @@ public class Scheduler implements Runnable {
             this.tasksRemaining = (LinkedList) tasksRemaining;
             this.taskResults = new ArrayList<>();
             this.numTasks = tasksRemaining.size();
+
             this.stopwatch = new Stopwatch();
+            this.probeStats = null;
+            this.specStats = null;
         }
 
         public String getNextTaskRemaining() {
@@ -129,6 +136,9 @@ public class Scheduler implements Runnable {
         }
 
         public boolean isComplete() {
+            if (taskResults.size() > numTasks) {
+                log("ERROR: scheduler has more task results than tasks");
+            }
             // currently there is no validation that the task results are for unique tasks
             log("Checking if job is complete; It has finished " + taskResults.size() + " tasks out of " + numTasks);
             return taskResults.size() == numTasks;
@@ -138,9 +148,12 @@ public class Scheduler implements Runnable {
     public synchronized void receivedJob(JobSpecContent m) throws IOException{
         // Store some state about the job, including remaining tasks to schedule
         Job j = new Job(m.getFrontendID(), m.getTasks());
-        jobs.put(m.getJobID(), j);
+        UUID jobId = m.getJobID();
+        jobs.put(jobId, j);
 
         log("received job spec from Frontend");
+        j.probeStats = new Stats(jobId.toString());
+        j.specStats = new Stats(jobId.toString());
         // Randomize node monitor ids to choose which to place tasks on
         Collections.shuffle(monitorIds);
 
@@ -149,10 +162,11 @@ public class Scheduler implements Runnable {
         for (int i = 0; i < d * j.numTasks; i++) {
             int monitorId = monitorIds.get(i % numMonitors);
 
-            ProbeContent probe = new ProbeContent(m.getJobID(), this.id);
+            ProbeContent probe = new ProbeContent(jobId, this.id);
             Message probeMessage = new Message(MessageType.PROBE, probe);
 
             log("sending probe to monitor " + monitorId);
+            j.probeStats.incrementCount(monitorId);
             objToNodeMonitors.get(monitorId).writeObject(probeMessage);
         }
 
@@ -167,7 +181,8 @@ public class Scheduler implements Runnable {
         if (!jobs.containsKey(jobId)) {
             log("ERROR:  Received spec request for job " + jobId + " that doesn't exist.");
         }
-        String task = jobs.get(jobId).getNextTaskRemaining();
+        Job j = jobs.get(jobId);
+        String task = j.getNextTaskRemaining();
         // Identify the node monitor making the request
         int monitorId = m.getMonitorID();
 
@@ -177,6 +192,7 @@ public class Scheduler implements Runnable {
             taskSpec = new TaskSpecContent(jobId, null, this.id, null);
         } else {
             log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
+            j.specStats.incrementCount(monitorId);
             // Create one task spec to pass to node monitor
             taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
         }
@@ -194,6 +210,8 @@ public class Scheduler implements Runnable {
         if (job.isComplete()) {
             double responseTime = job.stopwatch.elapsedTime();
             writer.println(jobId + " " + responseTime);
+            writer.println(" probes: " + job.probeStats);
+            writer.println("  specs: " + job.specStats);
             writer.flush();
 
             log("received task result from NodeMonitor, sending job result to Frontend");
