@@ -215,9 +215,11 @@ public class Scheduler implements Runnable {
 
         // if task is finished, return result to frontend
         if (job.isComplete()) {
+            // Log statistics
             double responseTime = job.stopwatch.elapsedTime();
             writer.println(jobId);
             writer.println(" [response time] " + responseTime);
+            writer.println(" [number of tasks] " + job.numTasks);
             writer.println(" [nm p s]");
             writer.println(Stats.stringStats(job.probeStats, job.specStats));
             writer.flush();
