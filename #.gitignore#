@@ -1,9 +1,0 @@
-*.class
-.classpath
-.project
-sparrrow-app/target/
-*.swp
-*.pyc
-.idea/
-sparrrow-app/sparrrow-app.iml
-sparrrow-app/logs/*.logs
