@@ -65,11 +65,11 @@ public abstract class Frontend implements Runnable {
                 pendingJobs.remove(resultContent.getJobID());
             }
 
-            while (true) ;
+            log("finished all tasks, closing down");
+            DoneContent dc = new DoneContent(id);
+            objToSched.writeObject(new Message(MessageType.DONE, dc));
+            socketWithSched.close();
 
-//            pipeFromSched.close();
-//            pipeToSched.close();
-//            log("finishing");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {

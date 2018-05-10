@@ -15,8 +15,16 @@ public class FrontendListener extends Listener {
     public void handleMessage(MessageContent m) {
         JobSpecContent newJob;
         try {
-            newJob = (JobSpecContent)m;
-            parent.receivedJob(newJob);
+            if (m instanceof DoneContent){
+                parent.receivedDoneMessage();
+                done = true;
+            } else if (m instanceof JobSpecContent) {
+                newJob = (JobSpecContent) m;
+                parent.receivedJob(newJob);
+            } else {
+                parent.log("my FrontendListener got a message type it didn't recognize: " + m.getClass());
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }

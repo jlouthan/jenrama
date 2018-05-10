@@ -8,6 +8,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Condition;
 
 
 /**
@@ -19,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Scheduler implements Runnable {
     protected final int id;
     protected final int d;
+
+    private CountDownLatch done = new CountDownLatch(1);
 
     // IO streams to and from Frontend
     private Socket socketWithFe;
@@ -95,11 +99,27 @@ public class Scheduler implements Runnable {
 
             log("started");
 
+            done.await();
+            Thread.sleep(1000);
 
-            while (true) {
-                // This is here so the parent thread of MonitorListener doesn't die
+            log("Got here A");
+
+            socketWithFe.close();
+
+            for(MonitorListener listener : monitorListeners){
+                listener.done = true;
             }
+            log("Got here B");
+
+            for(MonitorListener listener : monitorListeners) {
+                listener.join();
+            }
+
+            log("Got here C");
+
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -181,6 +201,10 @@ public class Scheduler implements Runnable {
     }
 
     public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
+        if(done.getCount() == 0){
+            return;
+        }
+
         TaskSpecContent taskSpec;
 
         // Find the job containing the requested task spec
@@ -235,4 +259,18 @@ public class Scheduler implements Runnable {
         }
     }
 
+    public synchronized void receivedDoneMessage() throws IOException {
+        DoneContent passDown = new DoneContent(id);
+        Message m = new Message(MessageType.DONE, passDown);
+
+        log("recieved done message from frontend, passing along and shutting down");
+        for(ObjectOutputStream out : objToNodeMonitors){
+            out.writeObject(m);
+        }
+        for(MonitorListener listener : monitorListeners) {
+            listener.done = true;
+        }
+
+        done.countDown();
+    }
 }

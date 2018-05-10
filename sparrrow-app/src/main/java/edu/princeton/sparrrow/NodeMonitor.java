@@ -5,8 +5,10 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * The node monitor receives probes from schedulers, communicates with schedulers
@@ -15,6 +17,7 @@ import java.util.Queue;
 
 public class NodeMonitor implements Runnable {
     protected final int id;
+    private CountDownLatch done;
     protected boolean executor_is_occupied;
     private Queue<ProbeContent> probeQueue;
 
@@ -23,6 +26,7 @@ public class NodeMonitor implements Runnable {
     private ArrayList<ServerSocket> socketsWithSchedsWaiting;
     protected ArrayList<ObjectOutputStream> objsToScheds;
     private ArrayList<SchedListener> schedListeners;
+    private HashSet<Integer> deadSchedulers;
 
     // IO streams to and from Executor
     private Socket socketWithExec;
@@ -34,6 +38,9 @@ public class NodeMonitor implements Runnable {
         this.probeQueue = new LinkedList<>();
         this.socketsWithSchedsWaiting = socketsWithSchedsWaiting;
         this.socketsWithScheds = new ArrayList<>();
+
+        this.deadSchedulers = new HashSet<>();
+        this.done = new CountDownLatch(socketsWithSchedsWaiting.size());
 
         this.objsToScheds = new ArrayList<>();
 
@@ -78,10 +85,31 @@ public class NodeMonitor implements Runnable {
             executorListener.start();
 
             log("finishing");
-            while (true) {
-                // This is here so the parent thread of the listeners doesn't die
+
+
+            done.await();
+            Thread.sleep(1000);
+
+            // Sleep to make sure that Executor gets my done message
+            //Thread.sleep(1000);
+
+            log("Got here A");
+
+            for(SchedListener listener : schedListeners){
+                listener.done = true;
             }
+            log("Got here B");
+
+            for(SchedListener listener : schedListeners){
+                listener.join();
+            }
+
+            socketWithExec.close();
+            log("Got here C");
+
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -107,6 +135,11 @@ public class NodeMonitor implements Runnable {
     // (requests task spec from) scheduler
     private void sendNextProbeReply() throws IOException {
         ProbeContent pc = probeQueue.peek();
+
+        while(pc != null && deadSchedulers.contains(pc.getSchedID())){
+            probeQueue.poll();
+            pc = probeQueue.peek();
+        }
         if (pc != null) {
             sendProbeReply(pc);
         } else {
@@ -190,4 +223,22 @@ public class NodeMonitor implements Runnable {
         sendNextProbeReply();
     }
 
+    public synchronized void handleDoneMessage(DoneContent m) throws IOException {
+        int schedId = m.getId();
+        if (deadSchedulers.contains(schedId)){
+            log("ERROR: recieved multiple Done messages from Scheduler " + schedId);
+        } else {
+            deadSchedulers.add(schedId);
+            socketsWithScheds.get(schedId).close();
+            done.countDown();
+
+            log("recieved done message from scheduler [" + schedId + "], waiting for " + done.getCount() + " more");
+            if (done.getCount() == 0){
+                log("received done messages from all schedulers, shutting down");
+                DoneContent myDone = new DoneContent(id);
+                Message doneM = new Message(MessageType.DONE, myDone);
+                objToExec.writeObject(doneM);
+            }
+        }
+    }
 }
