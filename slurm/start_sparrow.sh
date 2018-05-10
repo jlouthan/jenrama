@@ -22,7 +22,8 @@ rm ./sched-logs/*
 while [ $WORKERS_CREATED -lt $NUM_WORKERS ]; do
 	sbatch launch_worker.sh $WORKERS_CREATED $NUM_WORKERS $NUM_SCHEDS
 	let WORKERS_CREATED=WORKERS_CREATED+1
-	sleep 1 # pause to be kind to the scheduler
+	# 5 sec may be overkill, but with 1 or 2, sometimes output in monitor-list was out of order
+	sleep 5 # pause to be kind to the scheduler
 done
 
 sleep 5 # pause to give monitors a chance to start and open all sockets

@@ -83,7 +83,7 @@ public class CreateScheduler {
             for (int i = 0; i < workerHosts.size(); i++){
                 // each worker uses (num_scheds + 1) ports: 1 per sched and 1 for the executor
                 int monitorPortOffset = i * (numScheds + 1) + schedId;
-                System.out.println("Trying to create socket with port " + (port0 + monitorPortOffset));
+                System.out.println("Trying to create socket with port " + (port0 + monitorPortOffset) + " on host " + workerHosts.get(i));
                 schedSocket = new Socket(workerHosts.get(i), port0 + monitorPortOffset);
                 System.out.println("created socket with port " + (port0 + monitorPortOffset));
                 schedSocketsWithMonitor.add(schedSocket);
