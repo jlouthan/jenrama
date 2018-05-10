@@ -6,9 +6,7 @@
 #SBATCH -o worker-logs/worker_%j.out # File to which STDOUT will be written
 #SBATCH -e worker-logs/worker_%j.err # File to which STDERR will be written
 
-#echo "Running on node $SLURM_JOB_NODELIST $SLURM_NODELIST $SLURM_JOB_ID $SLURM_JOBID"
-
-echo "$SLURM_JOB_NODELIST " >> monitor-list.txt
-#exec java -cp ./sparrrow-app-1.0-SNAPSHOT.jar edu.princeton.sparrrow.CreateNodeMonitor 0 1 1
+# Save the host name of the node this process gets assigned to, to be referenced by schedulers
+echo "$SLURM_JOB_NODELIST" >> monitor-list.txt
 
 exec java -cp ./sparrrow-app-1.0-SNAPSHOT.jar edu.princeton.sparrrow.CreateNodeMonitor "$@"

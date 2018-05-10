@@ -6,6 +6,4 @@
 #SBATCH -o ./sched-logs/sched_%j.out # File to which STDOUT will be written
 #SBATCH -e ./sched-logs/sched_%j.err # File to which STDERR will be written
 
-#exec java -cp ./sparrrow-app-1.0-SNAPSHOT.jar edu.princeton.sparrrow.CreateScheduler 0 1 1 ns-130
-
 exec java -cp ./sparrrow-app-1.0-SNAPSHOT.jar edu.princeton.sparrrow.CreateScheduler "$@"
