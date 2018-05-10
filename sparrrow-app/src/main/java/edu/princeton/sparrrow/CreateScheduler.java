@@ -80,7 +80,7 @@ public class CreateScheduler {
             Socket schedSocket;
 
             // Create client connection to the designated socket on each monitor
-            for (int i = 0; i < numMonitors; i++){
+            for (int i = 0; i < workerHosts.size(); i++){
                 // each worker uses (num_scheds + 1) ports: 1 per sched and 1 for the executor
                 int monitorPortOffset = i * (numScheds + 1) + schedId;
                 System.out.println("Trying to create socket with port " + (port0 + monitorPortOffset));

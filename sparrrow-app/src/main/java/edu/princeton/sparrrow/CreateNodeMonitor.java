@@ -49,6 +49,7 @@ public class CreateNodeMonitor {
             // The monitor has a socket for each scheduler to use
             for (int i = 0; i < numScheds; i++){
                 monitorSocket = new ServerSocket(port0 + portCounter);
+                System.out.println("Worker " + workerId + " created socket on port " + (port0 + portCounter) + " for scheduler " + i);
                 monitorSocketsWithSched.add(monitorSocket);
                 portCounter++;
             }
