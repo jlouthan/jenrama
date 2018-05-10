@@ -9,6 +9,7 @@ public abstract class Listener extends Thread {
     protected ObjectInputStream objInputStream;
     protected InputStream socketInputStream;
     protected boolean done = false;
+    protected Logger parent;
 
     public void run() {
 
@@ -45,6 +46,6 @@ public abstract class Listener extends Thread {
     public abstract void handleMessage(MessageContent m);
 
     public void log(String m){
-        System.out.println("Listener: " + m);
+        parent.log(this.getClass().getSimpleName() + ": " + m);
     }
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.locks.Condition;
  * according to the scheduling policy.
  */
 
-public class Scheduler implements Runnable {
+public class Scheduler implements Runnable, Logger {
     protected final int id;
     protected final int d;
 
@@ -102,20 +102,17 @@ public class Scheduler implements Runnable {
             done.await();
             Thread.sleep(1000);
 
-            log("Got here A");
-
             socketWithFe.close();
 
             for(MonitorListener listener : monitorListeners){
                 listener.done = true;
             }
-            log("Got here B");
 
             for(MonitorListener listener : monitorListeners) {
                 listener.join();
             }
 
-            log("Got here C");
+            log("all listeners closed, now terminating");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -124,7 +121,7 @@ public class Scheduler implements Runnable {
         }
     }
 
-    protected void log(String text){
+    public synchronized void log(String text){
         System.out.println("Scheduler[" + this.id + "]: " + text);
     }
 

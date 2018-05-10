@@ -9,6 +9,7 @@ public class SchedListener extends Listener {
 
     public SchedListener(InputStream socketFromSched, NodeMonitor parent) throws IOException {
         super.socketInputStream = socketFromSched;
+        super.parent = parent;
         this.parent = parent;
     }
 

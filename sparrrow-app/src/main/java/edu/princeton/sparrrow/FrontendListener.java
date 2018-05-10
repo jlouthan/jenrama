@@ -10,6 +10,7 @@ public class FrontendListener extends Listener {
     public FrontendListener (InputStream socketFromFrontend, Scheduler parent) throws IOException {
         super.objInputStream = new ObjectInputStream(socketFromFrontend);
         this.parent = parent;
+        super.parent = parent;
     }
 
     public void handleMessage(MessageContent m) {

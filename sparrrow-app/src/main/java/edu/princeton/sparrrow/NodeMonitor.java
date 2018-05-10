@@ -15,7 +15,7 @@ import java.util.concurrent.CountDownLatch;
  * to coordinate receiving job tasks, and sends those tasks to its executor.
  */
 
-public class NodeMonitor implements Runnable {
+public class NodeMonitor implements Runnable, Logger {
     protected final int id;
     private CountDownLatch done;
     protected boolean executor_is_occupied;
@@ -90,22 +90,17 @@ public class NodeMonitor implements Runnable {
             done.await();
             Thread.sleep(1000);
 
-            // Sleep to make sure that Executor gets my done message
-            //Thread.sleep(1000);
-
-            log("Got here A");
-
             for(SchedListener listener : schedListeners){
                 listener.done = true;
             }
-            log("Got here B");
 
             for(SchedListener listener : schedListeners){
                 listener.join();
             }
 
             socketWithExec.close();
-            log("Got here C");
+
+            log("all listeners closed, now terminating");
 
         } catch (IOException e) {
             e.printStackTrace();

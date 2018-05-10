@@ -9,6 +9,7 @@ public class MonitorListener extends Listener {
     public MonitorListener(Socket socketFromMonitor, Scheduler parent) throws IOException {
         super.socketInputStream = socketFromMonitor.getInputStream();
         this.parent = parent;
+        super.parent = parent;
     }
 
     public void handleMessage(MessageContent m){

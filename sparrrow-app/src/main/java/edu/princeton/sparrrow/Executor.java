@@ -11,7 +11,7 @@ import java.net.Socket;
  * The executor receives a job task from a node monitor, executes it, and returns the results.
  */
 
-public abstract class Executor implements Runnable {
+public abstract class Executor implements Runnable, Logger {
     protected final int id;
     private boolean done = false;
 
@@ -63,7 +63,7 @@ public abstract class Executor implements Runnable {
         }
     }
 
-    private void log(String text){
+    public synchronized void log(String text){
         System.out.println("Executor[" + this.id + "]: " + text);
     }
 
