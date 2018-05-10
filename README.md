@@ -20,6 +20,8 @@ You will see the slurm logs listing each batch job ID as they start. Once all th
 
 `worker-logs/` folder contains the stdout logs for each worker, labeled with their job IDs
 
+The logs in the three above folders are wiped and overwritten each time you run start_sparrow
+
 ### If there are new local changes to propogate to the cluster:
 
 1. Build the project locally with `mvn package`
