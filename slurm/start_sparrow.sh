@@ -25,7 +25,7 @@ while [ $WORKERS_CREATED -lt $NUM_WORKERS ]; do
 	sleep 1 # pause to be kind to the scheduler
 done
 
-sleep 30 # pause to give monitors a chance to start and open all sockets
+sleep 5 # pause to give monitors a chance to start and open all sockets
 
 # Create schedulers one by one
 while [ $SCHEDS_CREATED -lt $NUM_SCHEDS ]; do
