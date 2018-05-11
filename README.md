@@ -10,7 +10,7 @@ Final Project for COS 518 Spring 2018:  Sparrow
 3. If desired, change `NUM_SCHEDS` and `NUM_WORKERS` in start_sparrow.sh (default is 5 and 25)
 4. Start sparrow on the cluster just by running the script:  `./start_sparrow.sh`
 
-You will see the slurm logs listing each batch job ID as they start. There is a job for each scheduler and each worker. Once all the jobs are started, they can be viewed with `squeue`
+You will see the slurm logs listing each batch job ID as they start. It will take a few minutes to start all the jobs. There is a job for each scheduler and each worker. Once all the jobs are started, they can be viewed with `squeue`
 
 #### Output
 
