@@ -19,9 +19,14 @@ public class RandomScheduler extends Scheduler {
     @Override
     public synchronized void receivedJob(JobSpecContent m) throws IOException {
         Job j = new Job(m.getFrontendID(), m.getTasks());
-        jobs.put(m.getJobID(), j);
+        UUID jobId = m.getJobID();
+        jobs.put(jobId, j);
 
         log(id + " received job spec from Frontend, distributing tasks randomly");
+
+        // initialize stats
+        j.probeStats = new Stats(jobId.toString());
+        j.specStats = new Stats(jobId.toString());
 
         String taskSpecStr;
         TaskSpecContent taskContent;
