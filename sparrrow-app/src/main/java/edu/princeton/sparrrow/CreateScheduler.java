@@ -12,7 +12,7 @@ import java.io.File;
 /**
  * Creates and Launches a single scheduler daemon: 1 scheduler and 1 instance of our frontend
  *
- * usage:  java CreateScheduler schedId numMonitors numSchedulers
+ * usage:  java CreateScheduler schedId numMonitors numSchedulers workerHostsFile numJobs schedScheme
  * all args will are optional and will be set to defaults in SparrrowConf otherwise
  *
  * Note:  Workers should be created before schedulers so that the server sockets are ready for client connections
@@ -28,6 +28,8 @@ public class CreateScheduler {
     static int numMonitors = SparrrowConf.N_EXECUTORS;
     static int numScheds = SparrrowConf.N_FRONTENDS;
     static List<String> workerHosts;
+    static int numJobs = 1;
+    static String schedScheme = "sparrow";
 
     private static void setWorkerHosts(String filename) {
         workerHosts.clear();
@@ -61,6 +63,12 @@ public class CreateScheduler {
                     if (args.length > 3) {
                         // There is a list of monitor hosts, replace existing list with them
                         setWorkerHosts(args[3]);
+                        if (args.length > 4) {
+                            numJobs = Integer.parseInt(args[4]);
+                            if (args.length > 5) {
+                                schedScheme= args[5];
+                            }
+                        }
                     }
                 }
             }
@@ -93,8 +101,26 @@ public class CreateScheduler {
             ServerSocket schedSocketWithFe = new ServerSocket(port0_sched + schedId);
             Socket feSocketWithSched = new Socket("127.0.0.1", port0_sched + schedId);
 
-            Frontend frontend = new RandstatFrontend(schedId, feSocketWithSched);
-            Scheduler scheduler = new Scheduler(schedId, schedSocketWithFe, schedSocketsWithMonitor, SparrrowConf.D);
+            Scheduler scheduler;
+
+            Frontend frontend = new RandstatFrontend(schedId, feSocketWithSched, numJobs);
+            switch (schedScheme) {
+                case "random":
+                    System.out.println("Using the Random scheduler.");
+                    scheduler = new RandomScheduler(schedId, schedSocketWithFe, schedSocketsWithMonitor, SparrrowConf.D);
+                    break;
+                case "pertask":
+                    System.out.println("Using the Per-Task scheduler.");
+                    scheduler = new PerTaskScheduler(schedId, schedSocketWithFe, schedSocketsWithMonitor, SparrrowConf.D);
+                    break;
+                case "batch":
+                    System.out.println("Using the Batch scheduler.");
+                    scheduler = new BatchScheduler(schedId, schedSocketWithFe, schedSocketsWithMonitor, SparrrowConf.D);
+                    break;
+                default:
+                    System.out.println("Using the Sparrow scheduler.");
+                    scheduler = new Scheduler(schedId, schedSocketWithFe, schedSocketsWithMonitor, SparrrowConf.D);
+            }
 
             ArrayList<Thread> allThreads = new ArrayList<>();
 

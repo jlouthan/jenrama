@@ -8,7 +8,7 @@ import java.util.ArrayList;
 /**
  * Creates and Launches a single worker daemon: 1 node monitor and 1 instance of our executor
  *
- * usage:  java CreateWorker workerId numMonitors numSchedulers
+ * usage:  java CreateWorker workerId numMonitors numSchedulers schedScheme
  *  * all args will are optional and will be set to defaults in SparrrowConf otherwise
  *
  *  Note:  Workers should be created before schedulers so that the server sockets are ready for client connections
@@ -23,6 +23,7 @@ public class CreateNodeMonitor {
         int workerId = 0;
         int numMonitors = SparrrowConf.N_EXECUTORS;
         int numScheds = SparrrowConf.N_FRONTENDS;
+        String schedScheme = "sparrow";
 
         // read in provided command line arguments
         if (args.length > 0) {
@@ -31,6 +32,9 @@ public class CreateNodeMonitor {
                 numMonitors = Integer.parseInt(args[1]);
                 if (args.length > 2) {
                     numScheds = Integer.parseInt(args[2]);
+                    if (args.length > 3) {
+                        schedScheme = args[3];
+                    }
                 }
             }
         }
@@ -59,7 +63,14 @@ public class CreateNodeMonitor {
             Socket monitorSocketWithExec = new Socket("127.0.0.1", port0 + portCounter);
 
             Executor executor = new RandstatExecutor(workerId, execSocketWithMonitor);
-            NodeMonitor monitor = new NodeMonitor(workerId, monitorSocketsWithSched, monitorSocketWithExec);
+            NodeMonitor monitor;
+            if (!schedScheme.equals("sparrow")) {
+                System.out.println("Using the Eager node monitor.");
+                monitor = new EagerNodeMonitor(workerId, monitorSocketsWithSched, monitorSocketWithExec);
+            } else {
+                System.out.println("Using the Sparrow node monitor.");
+                monitor = new NodeMonitor(workerId, monitorSocketsWithSched, monitorSocketWithExec);
+            }
 
             ArrayList<Thread> allThreads = new ArrayList<>();
 
