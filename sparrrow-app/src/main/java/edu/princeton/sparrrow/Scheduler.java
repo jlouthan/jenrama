@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,7 +39,9 @@ public class Scheduler implements Runnable {
 
     protected int numMonitors;
 
-    private PrintWriter writer;
+    protected String formattedDate;
+    protected File logFile;
+    private PrintWriter logWriter;
 
     public Scheduler(int id, ServerSocket socketWithFe, ArrayList<Socket> socketsWithMonitors, int d) throws IOException {
         this.id = id;
@@ -60,11 +63,11 @@ public class Scheduler implements Runnable {
             monitorIds.add(i);
         }
 
-        // Create a log file (overwrites any existing file with the given name)
-        File file = new File("logs/scheduler-" + this.id + ".log");
-        file.getParentFile().mkdirs();
-        this.writer = new PrintWriter(file, "UTF-8");
-
+        // name the log file
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd.hh:mm:ss");
+        formattedDate = dateFormat.format(Calendar.getInstance().getTime());
+        this.logFile = new File("logs/sparrrow_" + this.formattedDate + "_scheduler_" + this.id + ".log");
+        this.logWriter = null; // initialized in the run() method
     }
 
     public void run() {
@@ -92,6 +95,18 @@ public class Scheduler implements Runnable {
             for (int i = 0; i < numMonitors; i++) {
                 monitorListeners.get(i).start();
             }
+
+            // Create a log file (overwrites any existing file with the given name) and
+            // create any necessary parent directories
+            this.logFile.getParentFile().mkdirs();
+            this.logWriter = new PrintWriter(logFile, "UTF-8");
+
+            // Write system setup stats to the log file
+            logWriter.println("[scheduler id] "+ this.id);
+            logWriter.println("[number of node monitors] " + numMonitors);
+            logWriter.println();
+            logWriter.println("[job statistics]");
+            logWriter.flush();
 
             log("started");
 
@@ -220,12 +235,12 @@ public class Scheduler implements Runnable {
         if (job.isComplete()) {
             // Log statistics
             double responseTime = job.stopwatch.elapsedTime();
-            writer.println(jobId);
-            writer.println(" [response time] " + responseTime);
-            writer.println(" [number of tasks] " + job.numTasks);
-            writer.println(" [nm p s]");
-            writer.println(Stats.stringStats(job.probeStats, job.specStats));
-            writer.flush();
+            logWriter.println(jobId);
+            logWriter.println(" [response time] " + responseTime);
+            logWriter.println(" [number of tasks] " + job.numTasks);
+            logWriter.println(" [nm p s]");
+            logWriter.println(Stats.stringStats(job.probeStats, job.specStats));
+            logWriter.flush();
 
             log("received task result from NodeMonitor, sending job result to Frontend");
             JobResultContent newMessage = new JobResultContent(jobId, job.taskResults);
