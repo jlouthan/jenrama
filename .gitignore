@@ -7,5 +7,7 @@ sparrrow-app/target/
 .idea/
 sparrrow-app/sparrrow-app.iml
 sparrrow-app/logs/*.log
-bash-scripts/logs/*.log
+local-bash-scripts/logs/*.log
 dependency-reduced-pom.xml
+slurm/monitor-list.txt
+slurm/sparrrow-app-1.0-SNAPSHOT.jar

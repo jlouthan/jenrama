@@ -1,9 +1,13 @@
 package edu.princeton.sparrrow;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.io.File;
 
 /**
  * Creates and Launches a single scheduler daemon: 1 scheduler and 1 instance of our frontend
@@ -17,14 +21,35 @@ import java.util.ArrayList;
 
 public class CreateScheduler {
 
+    final static int port0 = SparrrowConf.PORT_0;
+    final static int port0_sched = SparrrowConf.PORT_0_SCHED;
+
+    static int schedId = 0;
+    static int numMonitors = SparrrowConf.N_EXECUTORS;
+    static int numScheds = SparrrowConf.N_FRONTENDS;
+    static List<String> workerHosts;
+
+    private static void setWorkerHosts(String filename) {
+        workerHosts.clear();
+        Scanner sc = null;
+        try {
+            sc = new Scanner(new File(filename));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        while (sc.hasNextLine()) {
+            workerHosts.add(sc.nextLine());
+        }
+    }
+
     public static void main( String[] args ) {
 
-        final int port0 = SparrrowConf.PORT_0;
-        final int port0_sched = SparrrowConf.PORT_0_SCHED;
+        // By default, all workers are on local host
+        workerHosts = new ArrayList<>();
 
-        int schedId = 0;
-        int numMonitors = SparrrowConf.N_EXECUTORS;
-        int numScheds = SparrrowConf.N_FRONTENDS;
+        for (int i = 0; i < numMonitors; i++) {
+            workerHosts.add(SparrrowConf.WORKER_HOST);
+        }
 
         // read in provided command line arguments
         if (args.length > 0) {
@@ -33,6 +58,10 @@ public class CreateScheduler {
                 numMonitors = Integer.parseInt(args[1]);
                 if (args.length > 2) {
                     numScheds = Integer.parseInt(args[2]);
+                    if (args.length > 3) {
+                        // There is a list of monitor hosts, replace existing list with them
+                        setWorkerHosts(args[3]);
+                    }
                 }
             }
         }
@@ -51,11 +80,11 @@ public class CreateScheduler {
             Socket schedSocket;
 
             // Create client connection to the designated socket on each monitor
-            for (int i = 0; i < numMonitors; i++){
+            for (int i = 0; i < workerHosts.size(); i++){
                 // each worker uses (num_scheds + 1) ports: 1 per sched and 1 for the executor
                 int monitorPortOffset = i * (numScheds + 1) + schedId;
-                System.out.println("Trying to create socket with port " + (port0 + monitorPortOffset));
-                schedSocket = new Socket("127.0.0.1", port0 + monitorPortOffset);
+                System.out.println("Trying to create socket with port " + (port0 + monitorPortOffset) + " on host " + workerHosts.get(i));
+                schedSocket = new Socket(workerHosts.get(i), port0 + monitorPortOffset);
                 System.out.println("created socket with port " + (port0 + monitorPortOffset));
                 schedSocketsWithMonitor.add(schedSocket);
             }
