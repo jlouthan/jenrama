@@ -73,7 +73,7 @@ public class Stats {
         return sb.toString();
     }
 
-    // Creates a String of lines of the stats for the ids of s1, of the form
+    // Creates a String of lines of the stats for the ids of s1, (or s2 if s1 is empty) of the form
     // " [<id>] <s1count> <s2count>"
     public static String stringStats(Stats s1, Stats s2) {
         StringBuilder sb = new StringBuilder();
@@ -81,7 +81,14 @@ public class Stats {
         String preface = " ";
         String separator = " ";
 
-        for (Enumeration<Integer> e = s1.getKeys(); e.hasMoreElements();) {
+        Stats ids_from;
+        if (s1.dict.isEmpty()) {
+            ids_from = s2;
+        } else {
+            ids_from = s1;
+        }
+
+        for (Enumeration<Integer> e = ids_from.getKeys(); e.hasMoreElements();) {
             int id = e.nextElement();
 
             sb.append(preface);
