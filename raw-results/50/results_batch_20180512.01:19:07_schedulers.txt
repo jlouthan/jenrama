@@ -1,0 +1,29 @@
+batch_20180512.01:19:07_scheduler_0.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 4600 ms
+
+batch_20180512.01:19:07_scheduler_1.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 5035 ms
+
+batch_20180512.01:19:07_scheduler_2.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 6121 ms
+
+batch_20180512.01:19:07_scheduler_3.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 6777 ms
+
+batch_20180512.01:19:07_scheduler_4.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 6904 ms
+
+FINAL STATS
+total number of jobs = 250
+total number of tasks = 1250
+average response time per job = 5888 ms

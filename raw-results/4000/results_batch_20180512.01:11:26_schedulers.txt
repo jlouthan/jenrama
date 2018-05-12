@@ -1,0 +1,29 @@
+batch_20180512.01:11:26_scheduler_0.log stats
+ total number of jobs = 4000
+ total number of tasks = 20000
+ average response time per job = 303512 ms
+
+batch_20180512.01:11:26_scheduler_1.log stats
+ total number of jobs = 4000
+ total number of tasks = 20000
+ average response time per job = 297995 ms
+
+batch_20180512.01:11:26_scheduler_2.log stats
+ total number of jobs = 4000
+ total number of tasks = 20000
+ average response time per job = 298551 ms
+
+batch_20180512.01:11:26_scheduler_3.log stats
+ total number of jobs = 4000
+ total number of tasks = 20000
+ average response time per job = 299759 ms
+
+batch_20180512.01:11:26_scheduler_4.log stats
+ total number of jobs = 4000
+ total number of tasks = 20000
+ average response time per job = 294563 ms
+
+FINAL STATS
+total number of jobs = 20000
+total number of tasks = 100000
+average response time per job = 298876 ms

@@ -1,0 +1,29 @@
+sparrrow_20180512.12:58:52_scheduler_0.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 5019 ms
+
+sparrrow_20180512.12:58:52_scheduler_1.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 6413 ms
+
+sparrrow_20180512.12:58:52_scheduler_2.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 6492 ms
+
+sparrrow_20180512.12:58:52_scheduler_3.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 5621 ms
+
+sparrrow_20180512.12:58:52_scheduler_4.log stats
+ total number of jobs = 50
+ total number of tasks = 250
+ average response time per job = 5504 ms
+
+FINAL STATS
+total number of jobs = 250
+total number of tasks = 1250
+average response time per job = 5810 ms

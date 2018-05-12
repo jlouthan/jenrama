@@ -1,0 +1,29 @@
+pertask_20180512.12:47:04_scheduler_0.log stats
+ total number of jobs = 100
+ total number of tasks = 500
+ average response time per job = 10348 ms
+
+pertask_20180512.12:47:04_scheduler_1.log stats
+ total number of jobs = 100
+ total number of tasks = 500
+ average response time per job = 13902 ms
+
+pertask_20180512.12:47:04_scheduler_2.log stats
+ total number of jobs = 100
+ total number of tasks = 500
+ average response time per job = 11184 ms
+
+pertask_20180512.12:47:04_scheduler_3.log stats
+ total number of jobs = 100
+ total number of tasks = 500
+ average response time per job = 12367 ms
+
+pertask_20180512.12:47:04_scheduler_4.log stats
+ total number of jobs = 100
+ total number of tasks = 500
+ average response time per job = 11294 ms
+
+FINAL STATS
+total number of jobs = 500
+total number of tasks = 2500
+average response time per job = 11819 ms
