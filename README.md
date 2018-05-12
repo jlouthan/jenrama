@@ -37,3 +37,7 @@ Now proceed to step 1 in the previous section
 ### Stopping Sparrow
 
 Once you have run the jobs and are satisfied with the output, you can stop all the jobs by our user with `scancel --user=jlouthan`
+
+## Evaluation
+
+The raw-results folder contains results from the cluster using 5 schedulers and 50 workers, and 5-task jobs. The subfolder name indicates how many of these jobs were submitted to EACH scheduler in the trials in that folder.
