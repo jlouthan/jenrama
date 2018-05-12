@@ -8,7 +8,9 @@ total_time=0
 
 # get greatest common prefix for arguments
 prefix=$1
-prefix=`printf "%s\n%s\n" "${@}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'`
+for arg in "$@"; do
+    prefix=`printf "%s\n%s\n" "$prefix" "$arg" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'`
+done
 
 # print output to a file for the greatest common prefix
 filebasename=`basename $prefix | sed 's/_$//'` # cut off final underscore
@@ -16,8 +18,7 @@ dirsname=`dirname $prefix`
 filename=$dirsname"/results_"$filebasename"s.txt"
 
 # walk through each file
-for var in "$@"
-do
+for var in "$@"; do
     scheduler_jobs=0
     scheduler_tasks=0
     scheduler_time=0
