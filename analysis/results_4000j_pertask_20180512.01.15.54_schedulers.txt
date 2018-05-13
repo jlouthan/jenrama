@@ -27,3 +27,6 @@ FINAL STATS
 total number of jobs = 20000
 total number of tasks = 100000
 average response time per job = 301331 ms
+variance = 101421952845
+sqrt_variance = 318468.13474035357561374819
+std_err_bar = 15.92340673701767878068
