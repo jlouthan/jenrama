@@ -27,6 +27,9 @@ public class MonitorListener extends Listener {
                 taskResult = (TaskResultContent) m;
                 // Handle message
                 parent.receivedResult(taskResult);
+            } else if (m instanceof  DoneAckContent){
+                parent.receivedDoneAck( (DoneAckContent) m);
+                done = true;
             } else {
                 parent.log("recieved unexpected message type from Monitor: " + m.getClass());
             }

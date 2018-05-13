@@ -15,7 +15,7 @@ public class ConstantExecutor extends Executor {
         int timeToWait = spec.getInt("Time");
         long elapsedTime = 0;
 
-        while(elapsedTime < timeToWait * 1000){
+        while(elapsedTime < timeToWait){
             elapsedTime = System.currentTimeMillis() - start;
         }
 

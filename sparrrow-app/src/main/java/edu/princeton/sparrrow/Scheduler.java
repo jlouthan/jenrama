@@ -24,6 +24,8 @@ public class Scheduler implements Runnable, Logger {
     protected final int d;
 
     private CountDownLatch done = new CountDownLatch(1);
+    private CountDownLatch acknowledged;
+    private HashSet<Integer> gotAcks;
 
     // IO streams to and from Frontend
     private Socket socketWithFe;
@@ -115,17 +117,20 @@ public class Scheduler implements Runnable, Logger {
             log("started");
 
             done.await();
-            Thread.sleep(1000);
 
-            socketWithFe.close();
+            acknowledged.await();
+
+
 
             for(MonitorListener listener : monitorListeners){
-                listener.done = true;
+                // Shouldn't need this
+                // listener.done = true;
             }
 
             for(MonitorListener listener : monitorListeners) {
                 listener.join();
             }
+
 
             log("all listeners closed, now terminating");
 
@@ -212,7 +217,7 @@ public class Scheduler implements Runnable, Logger {
 
     }
 
-    public void receivedSpecRequest(ProbeReplyContent m) throws IOException {
+    public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
         if(done.getCount() == 0){
             return;
         }
@@ -228,52 +233,50 @@ public class Scheduler implements Runnable, Logger {
         Job j = jobs.get(jobId);
         int monitorId = m.getMonitorID();
 
-        synchronized(j) {
-            String task = j.getNextTaskRemaining();
-            // Identify the node monitor making the request
+        String task = j.getNextTaskRemaining();
+        // Identify the node monitor making the request
 
-            // If there are no more tasks for the job, send null spec back to Node Monitor
-            if (task == null) {
-                log("received task spec request for finished job, sending null reply");
-                taskSpec = new TaskSpecContent(jobId, null, this.id, null);
-            } else {
-                log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
-                // Create one task spec to pass to node monitor
-                taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
+        // If there are no more tasks for the job, send null spec back to Node Monitor
+        if (task == null) {
+            log("received task spec request for finished job, sending null reply");
+            taskSpec = new TaskSpecContent(jobId, null, this.id, null);
+        } else {
+            log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
+            // Create one task spec to pass to node monitor
+            taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
 
-                // only increment stats for true specs sent
-                j.specStats.incrementCount(monitorId);
-            }
-            Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
-            objToNodeMonitors.get(monitorId).writeObject(spec);
+            // only increment stats for true specs sent
+            j.specStats.incrementCount(monitorId);
         }
+        Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
+        objToNodeMonitors.get(monitorId).writeObject(spec);
+
     }
 
-    public void receivedResult(TaskResultContent m) throws IOException{
+    public synchronized void receivedResult(TaskResultContent m) throws IOException{
         // collect task result
         UUID jobId = m.getJobID();
         Job job = jobs.get(jobId);
 
-        synchronized (job) {
-            job.taskResults.add(m.getResult());
+        job.taskResults.add(m.getResult());
 
-            // if task is finished, return result to frontend
-            if (job.isComplete()) {
-                // Log statistics
-                double responseTime = job.stopwatch.elapsedTime();
-                logWriter.println(jobId);
-                logWriter.println(" [response time] " + responseTime);
-                logWriter.println(" [number of tasks] " + job.numTasks);
-                logWriter.println(" [nm p s]");
-                logWriter.println(Stats.stringStats(job.probeStats, job.specStats));
-                logWriter.flush();
+        // if task is finished, return result to frontend
+        if (job.isComplete()) {
+            // Log statistics
+            double responseTime = job.stopwatch.elapsedTime();
+            logWriter.println(jobId);
+            logWriter.println(" [response time] " + responseTime);
+            logWriter.println(" [number of tasks] " + job.numTasks);
+            logWriter.println(" [nm p s]");
+            logWriter.println(Stats.stringStats(job.probeStats, job.specStats));
+            logWriter.flush();
 
-                log("received task result from NodeMonitor, sending job result to Frontend");
-                JobResultContent newMessage = new JobResultContent(jobId, job.taskResults);
+            log("received task result from NodeMonitor, sending job result to Frontend");
+            JobResultContent newMessage = new JobResultContent(jobId, job.taskResults);
 
-                Message reply = new Message(MessageType.JOB_RESULT, newMessage);
-                objToFe.writeObject(reply);
-            }
+            Message reply = new Message(MessageType.JOB_RESULT, newMessage);
+            objToFe.writeObject(reply);
+
         }
     }
 
@@ -281,14 +284,34 @@ public class Scheduler implements Runnable, Logger {
         DoneContent passDown = new DoneContent(id);
         Message m = new Message(MessageType.DONE, passDown);
 
-        log("recieved done message from frontend, passing along and shutting down");
+        log("recieved done message from frontend, passing along and awaiting ACKs");
+
+        DoneAckContent ack = new DoneAckContent(id);
+        Message reply = new Message(MessageType.DONE_ACK, ack);
+        objToFe.writeObject(reply);
+
+        gotAcks = new HashSet<>();
+        acknowledged = new CountDownLatch(objToNodeMonitors.size());
+
         for(ObjectOutputStream out : objToNodeMonitors){
             out.writeObject(m);
         }
-        for(MonitorListener listener : monitorListeners) {
-            listener.done = true;
-        }
 
         done.countDown();
+    }
+
+    public synchronized void receivedDoneAck(DoneAckContent m) throws IOException {
+        if(done.getCount() != 0){
+            log("ERROR: received DoneAck from monitor " + m.getId() + " before actually finishing");
+            return;
+        }
+
+        int sender =  m.getId();
+        if (gotAcks.contains(sender)){
+            log("ERROR: received multiple ACKs from NodeMonitor " + sender);
+        } else {
+            gotAcks.add(sender);
+            acknowledged.countDown();
+        }
     }
 }

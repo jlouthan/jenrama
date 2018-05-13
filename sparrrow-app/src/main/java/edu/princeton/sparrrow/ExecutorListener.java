@@ -15,11 +15,14 @@ public class ExecutorListener extends Listener {
     }
 
     public void handleMessage(MessageContent m) {
-        TaskResultContent taskResult;
-        taskResult = (TaskResultContent) m;
-        // Handle message
         try {
-            parent.handleTaskResult(taskResult);
+            if (m instanceof TaskResultContent) {
+                parent.handleTaskResult( (TaskResultContent) m);
+            } else if (m instanceof DoneAckContent){
+                parent.handleDoneAck( (DoneAckContent) m);
+                done = true;
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }

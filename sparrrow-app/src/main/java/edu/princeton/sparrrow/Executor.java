@@ -50,6 +50,8 @@ public abstract class Executor implements Runnable, Logger {
                     // Return result
                     objToMonitor.writeObject(new Message(MessageType.TASK_RESULT, result));
                 } else if (incomingContent instanceof DoneContent){
+                    DoneAckContent ack = new DoneAckContent(id);
+                    objToMonitor.writeObject(new Message(MessageType.DONE_ACK, ack));
                     done = true;
                 }
             }

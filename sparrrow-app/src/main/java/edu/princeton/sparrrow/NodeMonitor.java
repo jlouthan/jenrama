@@ -17,7 +17,10 @@ import java.util.concurrent.CountDownLatch;
 
 public class NodeMonitor implements Runnable, Logger {
     protected final int id;
+
     private CountDownLatch done;
+    private CountDownLatch acknowledged;
+
     protected boolean executor_is_occupied;
     private Queue<ProbeContent> probeQueue;
 
@@ -88,11 +91,8 @@ public class NodeMonitor implements Runnable, Logger {
 
 
             done.await();
-            Thread.sleep(1000);
 
-            for(SchedListener listener : schedListeners){
-                listener.done = true;
-            }
+            acknowledged.await();
 
             for(SchedListener listener : schedListeners){
                 listener.join();
@@ -224,16 +224,32 @@ public class NodeMonitor implements Runnable, Logger {
             log("ERROR: recieved multiple Done messages from Scheduler " + schedId);
         } else {
             deadSchedulers.add(schedId);
-            socketsWithScheds.get(schedId).close();
+
+            DoneAckContent ack = new DoneAckContent(id);
+            objsToScheds.get(schedId).writeObject(new Message(MessageType.DONE_ACK, ack));
+
+            if (done.getCount() == 1){
+                acknowledged = new CountDownLatch(1);
+            }
+
             done.countDown();
 
-            log("recieved done message from scheduler [" + schedId + "], waiting for " + done.getCount() + " more");
+            log("recieved done message from scheduler [" + schedId + "], sending ACK and waiting for " + done.getCount() + " more");
             if (done.getCount() == 0){
                 log("received done messages from all schedulers, shutting down");
+
                 DoneContent myDone = new DoneContent(id);
                 Message doneM = new Message(MessageType.DONE, myDone);
                 objToExec.writeObject(doneM);
             }
+        }
+    }
+
+    public synchronized void handleDoneAck(DoneAckContent d){
+        if(d.getId() == id){
+            acknowledged.countDown();
+        } else {
+            log("ERROR: received ack with id " + d.getId());
         }
     }
 }

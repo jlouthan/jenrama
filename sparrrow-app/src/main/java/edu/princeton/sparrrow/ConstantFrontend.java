@@ -8,15 +8,15 @@ import java.util.LinkedList;
 import java.util.Random;
 
 public class ConstantFrontend extends Frontend{
-    private int jobTime;
+    private int millis;
     private int numJobs;
     private static int numTasksPerJob = 5;
     private Random r;
 
-    public ConstantFrontend(int id, Socket socketWithSched, int numJobs, int jobTime){
+    public ConstantFrontend(int id, Socket socketWithSched, int numJobs, int millis){
         super(id, socketWithSched);
         this.numJobs = numJobs;
-        this.jobTime = jobTime;
+        this.millis = millis;
         r = new Random(id);
     }
 
@@ -24,7 +24,7 @@ public class ConstantFrontend extends Frontend{
         LinkedList<Collection<String>> allJobs = new LinkedList<>();
 
         JSONObject spec = new JSONObject();
-        spec.put("Time", jobTime);
+        spec.put("Time", millis);
         LinkedList<String> myJob;
         for (int i = 0; i < numJobs; i++) {
             myJob = new LinkedList<>();
@@ -47,7 +47,7 @@ public class ConstantFrontend extends Frontend{
             myJob = new LinkedList<>();
             for (int j = 0; i < numTasksPerJob; i++) {
                 spec = new JSONObject();
-                spec.put("Time", jobTime + r.nextInt(jobTime * 5));
+                spec.put("Time",  + r.nextInt( millis * 5));
                 myJob.add(spec.toString());
             }
             allJobs.add(myJob);

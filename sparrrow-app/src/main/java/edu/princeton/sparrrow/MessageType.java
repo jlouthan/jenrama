@@ -6,6 +6,7 @@ public enum MessageType {
     PROBE_REPLY,
     DET_PROBE_REPLY,
     DONE,
+    DONE_ACK,
     TASK_SPEC,
     TASK_RESULT,
     JOB_RESULT

@@ -61,7 +61,7 @@ public class App {
                 schedSocketWithFe = new ServerSocket(SparrrowConf.PORT_0 + portCounter);
                 feSocketWithSched = new Socket("127.0.0.1", SparrrowConf.PORT_0 + portCounter++);
 
-                fe = new ConstantFrontend(i, feSocketWithSched, numJobs, 3);
+                fe = new ConstantFrontend(i, feSocketWithSched, numJobs, 300);
                 fes.add(fe);
 
                 mySocketsWithMonitor = new ArrayList<>();
