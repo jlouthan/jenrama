@@ -11,6 +11,7 @@ public class ExecutorListener extends Listener {
     public ExecutorListener(InputStream socketFromExecutor, NodeMonitor parent) throws IOException {
         super.objInputStream = new ObjectInputStream(socketFromExecutor);
         this.parent = parent;
+        super.parent = parent;
     }
 
     public void handleMessage(MessageContent m) {

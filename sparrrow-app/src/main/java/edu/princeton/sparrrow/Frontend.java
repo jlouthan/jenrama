@@ -12,7 +12,7 @@ import java.util.UUID;
  * A frontend submits jobs to schedulers and receive results in return.
  */
 
-public abstract class Frontend implements Runnable {
+public abstract class Frontend implements Runnable, Logger {
 
     protected final int id;
 
@@ -65,11 +65,11 @@ public abstract class Frontend implements Runnable {
                 pendingJobs.remove(resultContent.getJobID());
             }
 
-            while (true) ;
+            log("finished all tasks, closing down");
+            DoneContent dc = new DoneContent(id);
+            objToSched.writeObject(new Message(MessageType.DONE, dc));
+            socketWithSched.close();
 
-//            pipeFromSched.close();
-//            pipeToSched.close();
-//            log("finishing");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -77,7 +77,7 @@ public abstract class Frontend implements Runnable {
         }
     }
 
-    protected void log(String text){
+    public synchronized void log(String text){
         System.out.println("Frontend[" + this.id + "]: " + text);
     }
 

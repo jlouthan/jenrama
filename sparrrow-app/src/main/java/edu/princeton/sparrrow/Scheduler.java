@@ -9,6 +9,8 @@ import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Condition;
 
 
 /**
@@ -17,9 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * according to the scheduling policy.
  */
 
-public class Scheduler implements Runnable {
+public class Scheduler implements Runnable, Logger {
     protected final int id;
     protected final int d;
+
+    private CountDownLatch done = new CountDownLatch(1);
 
     // IO streams to and from Frontend
     private Socket socketWithFe;
@@ -110,16 +114,29 @@ public class Scheduler implements Runnable {
 
             log("started");
 
+            done.await();
+            Thread.sleep(1000);
 
-            while (true) {
-                // This is here so the parent thread of MonitorListener doesn't die
+            socketWithFe.close();
+
+            for(MonitorListener listener : monitorListeners){
+                listener.done = true;
             }
+
+            for(MonitorListener listener : monitorListeners) {
+                listener.join();
+            }
+
+            log("all listeners closed, now terminating");
+
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    protected void log(String text){
+    public synchronized void log(String text){
         System.out.println("Scheduler[" + this.id + "]: " + text);
     }
 
@@ -195,7 +212,11 @@ public class Scheduler implements Runnable {
 
     }
 
-    public synchronized void receivedSpecRequest(ProbeReplyContent m) throws IOException {
+    public void receivedSpecRequest(ProbeReplyContent m) throws IOException {
+        if(done.getCount() == 0){
+            return;
+        }
+
         TaskSpecContent taskSpec;
 
         // Find the job containing the requested task spec
@@ -205,49 +226,69 @@ public class Scheduler implements Runnable {
             log("ERROR:  Received spec request for job " + jobId + " that doesn't exist.");
         }
         Job j = jobs.get(jobId);
-        String task = j.getNextTaskRemaining();
-        // Identify the node monitor making the request
         int monitorId = m.getMonitorID();
 
-        // If there are no more tasks for the job, send null spec back to Node Monitor
-        if (task == null) {
-            log("received task spec request for finished job, sending null reply");
-            taskSpec = new TaskSpecContent(jobId, null, this.id, null);
-        } else {
-            log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
-            // Create one task spec to pass to node monitor
-            taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
+        synchronized(j) {
+            String task = j.getNextTaskRemaining();
+            // Identify the node monitor making the request
 
-            // only increment stats for true specs sent
-            j.specStats.incrementCount(monitorId);
+            // If there are no more tasks for the job, send null spec back to Node Monitor
+            if (task == null) {
+                log("received task spec request for finished job, sending null reply");
+                taskSpec = new TaskSpecContent(jobId, null, this.id, null);
+            } else {
+                log("received task spec request from NodeMonitor, sending task " + task + " to NodeMonitor");
+                // Create one task spec to pass to node monitor
+                taskSpec = new TaskSpecContent(jobId, UUID.randomUUID(), this.id, task);
+
+                // only increment stats for true specs sent
+                j.specStats.incrementCount(monitorId);
+            }
+            Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
+            objToNodeMonitors.get(monitorId).writeObject(spec);
         }
-        Message spec = new Message(MessageType.TASK_SPEC, taskSpec);
-        objToNodeMonitors.get(monitorId).writeObject(spec);
     }
 
-    public synchronized void receivedResult(TaskResultContent m) throws IOException{
+    public void receivedResult(TaskResultContent m) throws IOException{
         // collect task result
         UUID jobId = m.getJobID();
         Job job = jobs.get(jobId);
-        job.taskResults.add(m.getResult());
 
-        // if task is finished, return result to frontend
-        if (job.isComplete()) {
-            // Log statistics
-            double responseTime = job.stopwatch.elapsedTime();
-            logWriter.println(jobId);
-            logWriter.println(" [response time] " + responseTime);
-            logWriter.println(" [number of tasks] " + job.numTasks);
-            logWriter.println(" [nm p s]");
-            logWriter.println(Stats.stringStats(job.probeStats, job.specStats));
-            logWriter.flush();
+        synchronized (job) {
+            job.taskResults.add(m.getResult());
 
-            log("received task result from NodeMonitor, sending job result to Frontend");
-            JobResultContent newMessage = new JobResultContent(jobId, job.taskResults);
+            // if task is finished, return result to frontend
+            if (job.isComplete()) {
+                // Log statistics
+                double responseTime = job.stopwatch.elapsedTime();
+                logWriter.println(jobId);
+                logWriter.println(" [response time] " + responseTime);
+                logWriter.println(" [number of tasks] " + job.numTasks);
+                logWriter.println(" [nm p s]");
+                logWriter.println(Stats.stringStats(job.probeStats, job.specStats));
+                logWriter.flush();
 
-            Message reply = new Message(MessageType.JOB_RESULT, newMessage);
-            objToFe.writeObject(reply);
+                log("received task result from NodeMonitor, sending job result to Frontend");
+                JobResultContent newMessage = new JobResultContent(jobId, job.taskResults);
+
+                Message reply = new Message(MessageType.JOB_RESULT, newMessage);
+                objToFe.writeObject(reply);
+            }
         }
     }
 
+    public synchronized void receivedDoneMessage() throws IOException {
+        DoneContent passDown = new DoneContent(id);
+        Message m = new Message(MessageType.DONE, passDown);
+
+        log("recieved done message from frontend, passing along and shutting down");
+        for(ObjectOutputStream out : objToNodeMonitors){
+            out.writeObject(m);
+        }
+        for(MonitorListener listener : monitorListeners) {
+            listener.done = true;
+        }
+
+        done.countDown();
+    }
 }

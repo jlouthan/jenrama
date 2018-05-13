@@ -11,8 +11,9 @@ import java.net.Socket;
  * The executor receives a job task from a node monitor, executes it, and returns the results.
  */
 
-public abstract class Executor implements Runnable {
+public abstract class Executor implements Runnable, Logger {
     protected final int id;
+    private boolean done = false;
 
     // IO streams to and from NodeMonitor
     private Socket socketWithMonitor;
@@ -26,6 +27,7 @@ public abstract class Executor implements Runnable {
     }
 
     public void run() {
+        MessageContent incomingContent;
         TaskSpecContent taskSpec;
         TaskResultContent result;
 
@@ -36,32 +38,32 @@ public abstract class Executor implements Runnable {
             this.objToMonitor = new ObjectOutputStream(socketWithMonitor.getOutputStream());
             this.objFromMonitor = new ObjectInputStream(socketWithMonitor.getInputStream());
 
-            while(true) {
-                // Receive task specification from Scheduler
-                taskSpec = (TaskSpecContent) ((Message) objFromMonitor.readObject()).getBody();
-                // Execute task
-                log("executing task " + taskSpec.getTaskID());
-                result = execute(taskSpec);
-                // Return result
-                objToMonitor.writeObject(new Message(MessageType.TASK_RESULT, result));
+            while(!done) {
+                incomingContent = ((Message) objFromMonitor.readObject()).getBody();
 
-                // Close IO channels
+                if (incomingContent instanceof TaskSpecContent){
+                    // Receive task specification from Scheduler
+                    taskSpec = (TaskSpecContent) incomingContent;
+                    // Execute task
+                    log("executing task " + taskSpec.getTaskID());
+                    result = execute(taskSpec);
+                    // Return result
+                    objToMonitor.writeObject(new Message(MessageType.TASK_RESULT, result));
+                } else if (incomingContent instanceof DoneContent){
+                    done = true;
+                }
             }
+            socketWithMonitor.close();
+            log("finishing");
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                socketWithMonitor.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            log("finishing");
         }
     }
 
-    private void log(String text){
+    public synchronized void log(String text){
         System.out.println("Executor[" + this.id + "]: " + text);
     }
 

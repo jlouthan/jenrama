@@ -1,5 +1,6 @@
 package edu.princeton.sparrrow;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -7,6 +8,8 @@ import java.io.ObjectInputStream;
 public abstract class Listener extends Thread {
     protected ObjectInputStream objInputStream;
     protected InputStream socketInputStream;
+    protected boolean done = false;
+    protected Logger parent;
 
     public void run() {
 
@@ -20,20 +23,29 @@ public abstract class Listener extends Thread {
         }
         MessageContent m;
 
-        while (true) {
-            try {
+        try {
+            while (!done || objInputStream.available() > 0) {
                 m = ((Message) objInputStream.readObject()).getBody();
                 handleMessage(m);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                break;
-
-            } catch (ClassNotFoundException e) {
+            }
+            objInputStream.close();
+        } catch(EOFException e){
+            log("exiting because my parent is shutting down");
+        } catch (IOException e) {
+            if(e.getMessage() == "Stream closed."){
+                log("exiting because the other end of my socket was closed");
+            } else {
                 e.printStackTrace();
             }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
+
+
     }
     public abstract void handleMessage(MessageContent m);
 
+    public void log(String m){
+        parent.log(this.getClass().getSimpleName() + ": " + m);
+    }
 }

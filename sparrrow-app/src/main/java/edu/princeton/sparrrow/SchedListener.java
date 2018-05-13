@@ -9,6 +9,7 @@ public class SchedListener extends Listener {
 
     public SchedListener(InputStream socketFromSched, NodeMonitor parent) throws IOException {
         super.socketInputStream = socketFromSched;
+        super.parent = parent;
         this.parent = parent;
     }
 
@@ -27,6 +28,9 @@ public class SchedListener extends Listener {
                 taskSpec = (TaskSpecContent) m;
                 // Handle message
                 parent.handleTaskSpec(taskSpec);
+            } else if (m instanceof DoneContent){
+                parent.handleDoneMessage( (DoneContent) m);
+                done = true;
             } else {
                 parent.log("ERROR: received message with wrong type");
             }

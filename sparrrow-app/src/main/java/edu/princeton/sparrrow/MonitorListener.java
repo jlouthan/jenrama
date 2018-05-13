@@ -9,6 +9,7 @@ public class MonitorListener extends Listener {
     public MonitorListener(Socket socketFromMonitor, Scheduler parent) throws IOException {
         super.socketInputStream = socketFromMonitor.getInputStream();
         this.parent = parent;
+        super.parent = parent;
     }
 
     public void handleMessage(MessageContent m){
@@ -17,16 +18,17 @@ public class MonitorListener extends Listener {
 
         try {
             if (m instanceof ProbeReplyContent) {
-                // Receive probe from scheduler
+                // Receive probe reply from monitor
                 probeReply = (ProbeReplyContent) m;
                 // Handle message
-                    parent.receivedSpecRequest(probeReply);
-
-            } else {
-                // Receive task specification from Scheduler
+                parent.receivedSpecRequest(probeReply);
+            } else if (m instanceof TaskResultContent) {
+                // Receive task result from monitor
                 taskResult = (TaskResultContent) m;
                 // Handle message
                 parent.receivedResult(taskResult);
+            } else {
+                parent.log("recieved unexpected message type from Monitor: " + m.getClass());
             }
         } catch (IOException e) {
             e.printStackTrace();
