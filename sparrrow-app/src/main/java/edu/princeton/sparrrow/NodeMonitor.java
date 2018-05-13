@@ -154,7 +154,7 @@ public class NodeMonitor implements Runnable, Logger {
         }
     }
 
-    private void queueProbe(ProbeContent pc) throws IOException{
+    private void queueProbe(ProbeContent pc){
         log("adding probe to queue");
 
         probeQueue.add(pc);
