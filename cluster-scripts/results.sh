@@ -17,6 +17,8 @@ filebasename=`basename $prefix | sed 's/_$//'` # cut off final underscore
 dirsname=`dirname $prefix`
 filename=$dirsname"/results_"$filebasename"s.txt"
 
+echo "" > $filename # overwrite the file
+
 # walk through each file
 for var in "$@"; do
     scheduler_jobs=0
