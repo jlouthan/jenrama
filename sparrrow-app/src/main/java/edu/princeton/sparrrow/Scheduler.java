@@ -64,7 +64,7 @@ public class Scheduler implements Runnable {
         }
 
         // name the log file
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd.hh:mm:ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd.hh.mm.ss");
         formattedDate = dateFormat.format(Calendar.getInstance().getTime());
         this.logFile = new File("logs/sparrrow_" + this.formattedDate + "_scheduler_" + this.id + ".log");
         this.logWriter = null; // initialized in the run() method
