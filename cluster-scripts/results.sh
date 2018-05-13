@@ -80,5 +80,36 @@ esac
 
 echo "average response time per job =" $avg_r_time "ms" >> $filename
 
+if [ "$total_jobs" -le 1 ]; then
+    echo "variance = 0" >> $filename
+else
+    # walk through each file again to compute variance
+    variance_sum=0
+    for var in "$@"; do
+        # walk through lines
+        while read -r line || [[ -n "$line" ]]; do
+            regex_rt='\[response time\]'
+
+            # if line has '[response time]' then add difference to variance sum
+            if [[ $line =~ $regex_rt ]]; then
+                r_time=`echo "$line" | grep -o  '[0-9]\+' | tr -d '[:space:]'  | tr -d '0'`
+                let difference=$r_time-$avg_r_time
+                let square=$difference*$difference
+                let variance_sum=$variance_sum+$square
+            fi
+        done < $var
+    done
+    let denom=$total_jobs-1
+    let variance=$variance_sum/$denom
+
+    echo "variance =" $variance >> $filename
+
+    sqrt_variance=`echo "sqrt ( $variance )" | bc -l`
+    echo "sqrt_variance =" $sqrt_variance >> $filename
+
+    std_err_bar=`echo "$sqrt_variance / $total_jobs" | bc -l`
+    echo "std_err_bar =" $std_err_bar >> $filename
+fi
+
 # also print results to terminal
 cat $filename
