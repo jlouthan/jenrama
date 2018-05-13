@@ -1,0 +1,448 @@
+[scheduler id] 3
+[number of node monitors] 50
+
+[job statistics]
+a76fd174-2571-41b2-b45d-f5f550b257c1
+ [response time] 2.26
+ [number of tasks] 5
+ [nm p s]
+ [42] 0 1
+ [40] 0 1
+ [7] 0 1
+ [3] 0 1
+ [0] 0 1
+8a2da9ec-5c4b-4225-8d36-a83b2c9e3a7f
+ [response time] 2.7
+ [number of tasks] 5
+ [nm p s]
+ [32] 0 1
+ [43] 0 1
+ [41] 0 1
+ [17] 0 1
+ [15] 0 1
+0575e9ae-8f00-480e-b718-cd6eee4d851f
+ [response time] 3.243
+ [number of tasks] 5
+ [nm p s]
+ [9] 0 1
+ [19] 0 1
+ [26] 0 1
+ [36] 0 1
+ [2] 0 1
+65192718-7c02-432b-b92a-e5697316729d
+ [response time] 3.623
+ [number of tasks] 5
+ [nm p s]
+ [31] 0 1
+ [18] 0 1
+ [29] 0 1
+ [3] 0 1
+ [45] 0 1
+e37ff089-85b0-44d0-b239-bd9e5ee9274a
+ [response time] 3.578
+ [number of tasks] 5
+ [nm p s]
+ [8] 0 1
+ [18] 0 1
+ [47] 0 1
+ [45] 0 1
+ [34] 0 1
+ab5dafa9-9ca9-4432-ba70-24c38dd0b31c
+ [response time] 3.921
+ [number of tasks] 5
+ [nm p s]
+ [19] 0 1
+ [40] 0 1
+ [5] 0 1
+ [38] 0 1
+ [35] 0 1
+c01b6a48-3a41-4bb0-8f4a-9f9e73c4361c
+ [response time] 4.59
+ [number of tasks] 5
+ [nm p s]
+ [17] 0 1
+ [15] 0 1
+ [1] 0 1
+ [0] 0 1
+ [33] 0 1
+361a886b-7fed-4868-b8ce-3f90afd9c85e
+ [response time] 4.808
+ [number of tasks] 5
+ [nm p s]
+ [21] 0 1
+ [32] 0 1
+ [9] 0 1
+ [19] 0 1
+ [23] 0 1
+b9091988-3688-4b0e-af9c-3d8204877e67
+ [response time] 4.687
+ [number of tasks] 5
+ [nm p s]
+ [7] 0 1
+ [5] 0 1
+ [26] 0 1
+ [13] 0 1
+ [12] 0 1
+465101f3-a30b-44d1-87ad-bcf9efdac8c4
+ [response time] 5.396
+ [number of tasks] 5
+ [nm p s]
+ [30] 0 1
+ [8] 0 1
+ [19] 0 1
+ [16] 0 1
+ [1] 0 1
+7e90e90a-7bcc-4d15-be14-1528182386e2
+ [response time] 5.933
+ [number of tasks] 5
+ [nm p s]
+ [21] 0 1
+ [7] 0 1
+ [28] 0 1
+ [34] 0 1
+ [0] 0 1
+aa0f47b8-75bf-45ab-9f56-1f2a37f7896a
+ [response time] 6.79
+ [number of tasks] 5
+ [nm p s]
+ [29] 0 1
+ [39] 0 1
+ [38] 0 1
+ [36] 0 1
+ [11] 0 1
+f096c097-00c8-4f4b-8d25-a874bbcdfec8
+ [response time] 7.128
+ [number of tasks] 5
+ [nm p s]
+ [29] 0 1
+ [40] 0 1
+ [28] 0 1
+ [24] 0 1
+ [11] 0 1
+b432e50d-5c5e-4fba-b18c-005847a1a9d9
+ [response time] 7.931
+ [number of tasks] 5
+ [nm p s]
+ [32] 0 1
+ [21] 0 1
+ [38] 0 1
+ [15] 0 1
+ [25] 0 1
+f1f2b760-08e5-4130-ae90-a1210566bb6a
+ [response time] 7.55
+ [number of tasks] 5
+ [nm p s]
+ [7] 0 1
+ [6] 0 1
+ [17] 0 1
+ [36] 0 1
+ [12] 0 1
+d2061119-4bfd-4b0e-837b-396b938996d4
+ [response time] 8.414
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [43] 0 1
+ [3] 0 1
+ [36] 0 2
+def63596-1515-481f-bf4f-5b2b5e9cc266
+ [response time] 8.917
+ [number of tasks] 5
+ [nm p s]
+ [16] 0 1
+ [26] 0 1
+ [36] 0 1
+ [13] 0 1
+ [23] 0 1
+9acd44c0-d4b6-45bd-8963-8f938f6c9f03
+ [response time] 9.291
+ [number of tasks] 5
+ [nm p s]
+ [29] 0 1
+ [49] 0 1
+ [2] 0 1
+ [34] 0 1
+ [33] 0 1
+9b902961-8722-41f8-85be-92eec48cea4c
+ [response time] 8.85
+ [number of tasks] 5
+ [nm p s]
+ [21] 0 1
+ [20] 0 1
+ [5] 0 1
+ [14] 0 1
+ [23] 0 1
+df98bd8b-9ed9-4399-8ff2-2c75c4ac3c6e
+ [response time] 8.462
+ [number of tasks] 5
+ [nm p s]
+ [7] 0 1
+ [28] 0 1
+ [15] 0 1
+ [45] 0 1
+ [23] 0 1
+0988de09-dd07-47b7-b38c-e63ef2c2b896
+ [response time] 8.92
+ [number of tasks] 5
+ [nm p s]
+ [21] 0 1
+ [31] 0 1
+ [9] 0 1
+ [6] 0 1
+ [1] 0 1
+211b484f-e74f-4d58-a3c3-458603ee2ed1
+ [response time] 10.06
+ [number of tasks] 5
+ [nm p s]
+ [32] 0 1
+ [41] 0 1
+ [40] 0 1
+ [39] 0 1
+ [2] 0 1
+9f354904-ef2e-4db8-9c60-e293338e2923
+ [response time] 9.362
+ [number of tasks] 5
+ [nm p s]
+ [8] 0 1
+ [7] 0 2
+ [5] 0 1
+ [11] 0 1
+32382568-ee28-4a9e-9b65-c2741f08a22d
+ [response time] 10.879
+ [number of tasks] 5
+ [nm p s]
+ [43] 0 1
+ [14] 0 1
+ [2] 0 1
+ [35] 0 1
+ [13] 0 1
+b94e7051-39e4-4173-9c2e-1e4bb13ef5d3
+ [response time] 9.761
+ [number of tasks] 5
+ [nm p s]
+ [43] 0 1
+ [21] 0 1
+ [10] 0 1
+ [42] 0 1
+ [22] 0 1
+c9ac95b4-fb65-4734-8ae2-74da53ea17b5
+ [response time] 9.606
+ [number of tasks] 5
+ [nm p s]
+ [41] 0 1
+ [6] 0 1
+ [17] 0 1
+ [26] 0 1
+ [3] 0 1
+b1475f96-edc9-4750-8ad5-b0539d84afc4
+ [response time] 10.769
+ [number of tasks] 5
+ [nm p s]
+ [26] 0 1
+ [4] 0 1
+ [47] 0 1
+ [24] 0 1
+ [45] 0 1
+069e2fab-3337-4a00-892a-4d457fca8c60
+ [response time] 10.242
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [9] 0 1
+ [8] 0 1
+ [40] 0 1
+ [27] 0 1
+c3a5b4cd-e3b0-4923-ab1c-b72ceb017815
+ [response time] 10.346
+ [number of tasks] 5
+ [nm p s]
+ [41] 0 1
+ [6] 0 1
+ [27] 0 1
+ [14] 0 1
+ [35] 0 1
+568420d6-f718-43f5-8e8c-2c0bb467d6dd
+ [response time] 11.487
+ [number of tasks] 5
+ [nm p s]
+ [19] 0 1
+ [6] 0 2
+ [35] 0 1
+ [13] 0 1
+299d662d-a233-47e0-bc94-67000f3df0f0
+ [response time] 12.44
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [28] 0 1
+ [24] 0 1
+ [11] 0 1
+ [0] 0 1
+60bdce42-436c-4789-9643-994ce32b646d
+ [response time] 12.776
+ [number of tasks] 5
+ [nm p s]
+ [20] 0 1
+ [28] 0 1
+ [48] 0 1
+ [24] 0 1
+ [1] 0 1
+d3e64da2-6154-4b7f-8e82-1446bc5a85fe
+ [response time] 12.875
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [29] 0 1
+ [28] 0 1
+ [37] 0 1
+ [0] 0 1
+4900c7fa-8150-434c-b31c-a155651c62e5
+ [response time] 13.304
+ [number of tasks] 5
+ [nm p s]
+ [21] 0 2
+ [10] 0 1
+ [27] 0 1
+ [38] 0 1
+64bb629f-26e8-4350-abc0-88fdc0fe24d5
+ [response time] 14.01
+ [number of tasks] 5
+ [nm p s]
+ [6] 0 1
+ [16] 0 1
+ [26] 0 1
+ [34] 0 1
+ [22] 0 1
+ab901386-cced-4530-a848-b90832b966f0
+ [response time] 15.651
+ [number of tasks] 5
+ [nm p s]
+ [8] 0 1
+ [39] 0 1
+ [38] 0 1
+ [2] 0 1
+ [34] 0 1
+c54892d7-e73f-4ed9-a978-c89604d3e81a
+ [response time] 14.418
+ [number of tasks] 5
+ [nm p s]
+ [30] 0 1
+ [18] 0 1
+ [7] 0 1
+ [17] 0 1
+ [35] 0 1
+0931c1f4-f308-44bc-88ac-19a2f4054eb2
+ [response time] 16.645
+ [number of tasks] 5
+ [nm p s]
+ [32] 0 1
+ [31] 0 1
+ [17] 0 1
+ [25] 0 1
+ [2] 0 1
+dcaa5786-03ed-4136-bb3d-c9cb4b7d1766
+ [response time] 16.06
+ [number of tasks] 5
+ [nm p s]
+ [31] 0 1
+ [7] 0 1
+ [17] 0 1
+ [25] 0 1
+ [33] 0 1
+e84cd196-fbdd-4c4a-b836-a1b24a6e4c2b
+ [response time] 16.489
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [8] 0 1
+ [28] 0 1
+ [37] 0 2
+0a13918c-23b6-4886-bfc8-2ea25d797345
+ [response time] 16.271
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [18] 0 1
+ [16] 0 1
+ [26] 0 1
+ [22] 0 1
+6464f045-aedb-411a-9d6f-b14362eef5dd
+ [response time] 16.288
+ [number of tasks] 5
+ [nm p s]
+ [31] 0 1
+ [7] 0 1
+ [17] 0 1
+ [5] 0 1
+ [49] 0 1
+4297c126-c9eb-4901-9f4f-1499c836d124
+ [response time] 17.081
+ [number of tasks] 5
+ [nm p s]
+ [28] 0 1
+ [15] 0 1
+ [37] 0 1
+ [23] 0 1
+ [45] 0 1
+4fd40c78-ffa0-49db-8b0c-e49ada7a2876
+ [response time] 17.021
+ [number of tasks] 5
+ [nm p s]
+ [20] 0 1
+ [26] 0 1
+ [25] 0 1
+ [23] 0 2
+ca27d196-5fa9-4cba-b9d4-77cbc1054983
+ [response time] 16.889
+ [number of tasks] 5
+ [nm p s]
+ [21] 0 1
+ [43] 0 1
+ [9] 0 1
+ [27] 0 1
+ [33] 0 1
+d3bc6b13-cc6f-43c1-acd0-052a4ae1a3cb
+ [response time] 18.249
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [48] 0 1
+ [3] 0 1
+ [45] 0 1
+ [22] 0 1
+917ad826-5d34-4efb-8bea-ddbcabdfb259
+ [response time] 19.09
+ [number of tasks] 5
+ [nm p s]
+ [7] 0 1
+ [15] 0 1
+ [26] 0 1
+ [25] 0 1
+ [2] 0 1
+58fa92b1-d2b7-482d-9967-cabacf5feade
+ [response time] 18.667
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [40] 0 1
+ [26] 0 1
+ [14] 0 1
+ [34] 0 1
+75a372bd-59e5-43f0-8cc0-aa583d12f782
+ [response time] 19.715
+ [number of tasks] 5
+ [nm p s]
+ [43] 0 1
+ [40] 0 1
+ [28] 0 1
+ [36] 0 1
+ [2] 0 1
+26607afc-f5b1-4cc4-a661-e3535e2f6ccc
+ [response time] 19.664
+ [number of tasks] 5
+ [nm p s]
+ [10] 0 1
+ [30] 0 1
+ [45] 0 1
+ [0] 0 1
+ [22] 0 1

@@ -1,5 +1,6 @@
 package edu.princeton.sparrrow;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -10,14 +11,22 @@ import java.util.UUID;
 public class RandomScheduler extends Scheduler {
     public RandomScheduler(int id, ServerSocket socketWithFe, ArrayList<Socket> socketsWithMonitors, int d) throws IOException {
         super(id, socketWithFe, socketsWithMonitors, d);
+
+        // name the log file (overrides the super's name)
+        this.logFile = new File("logs/random_" + this.formattedDate + "_scheduler_" + this.id + ".log");
     }
 
     @Override
     public synchronized void receivedJob(JobSpecContent m) throws IOException {
         Job j = new Job(m.getFrontendID(), m.getTasks());
-        jobs.put(m.getJobID(), j);
+        UUID jobId = m.getJobID();
+        jobs.put(jobId, j);
 
         log(id + " received job spec from Frontend, distributing tasks randomly");
+
+        // initialize stats
+        j.probeStats = new Stats(jobId.toString());
+        j.specStats = new Stats(jobId.toString());
 
         String taskSpecStr;
         TaskSpecContent taskContent;

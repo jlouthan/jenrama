@@ -20,6 +20,7 @@ public class App {
 
             int i;
             int portCounter = 0;
+            int numJobs = 1;
 
             ArrayList<Scheduler> schedulers = new ArrayList<>();
             ArrayList<Frontend> fes = new ArrayList<>();
@@ -60,7 +61,7 @@ public class App {
                 schedSocketWithFe = new ServerSocket(SparrrowConf.PORT_0 + portCounter);
                 feSocketWithSched = new Socket("127.0.0.1", SparrrowConf.PORT_0 + portCounter++);
 
-                fe = new RandstatFrontend(i, feSocketWithSched);
+                fe = new RandstatFrontend(i, feSocketWithSched, numJobs);
                 fes.add(fe);
 
                 mySocketsWithMonitor = new ArrayList<>();

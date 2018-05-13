@@ -1,5 +1,6 @@
 package edu.princeton.sparrrow;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,6 +14,9 @@ public class PerTaskScheduler extends Scheduler {
 
         public PerTaskScheduler(int id, ServerSocket socketWithFe, ArrayList<Socket> socketsWithMonitors, int d) throws IOException {
             super(id, socketWithFe, socketsWithMonitors, d);
+
+            // name the log file (overrides the super's name)
+            this.logFile = new File("logs/pertask_" + this.formattedDate + "_scheduler_" + this.id + ".log");
 
             pendingTasks = new HashMap<>();
         }

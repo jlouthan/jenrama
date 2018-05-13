@@ -8,15 +8,19 @@ import java.util.LinkedList;
 
 public class RandstatFrontend extends Frontend {
 
-    public RandstatFrontend(int id, Socket socketWithSched){
+    protected int numJobs;
+
+    public RandstatFrontend(int id, Socket socketWithSched, int numJobs){
         super(id, socketWithSched);
+        this.numJobs = numJobs;
     }
 
     protected Collection<Collection<String>> makeJobs() {
         LinkedList<Collection<String>> allJobs = new LinkedList<>();
-        allJobs.add(makeJob1());
-        allJobs.add(makeJob2());
-        allJobs.add(makeJob3());
+
+        for (int i = 0; i < numJobs; i++) {
+            allJobs.add(makeJob5());
+        }
 
         return allJobs;
     }
@@ -63,9 +67,27 @@ public class RandstatFrontend extends Frontend {
         return tasks;
     }
 
+
     private Collection<String> makeJob3(){
         LinkedList<String> tasks = new LinkedList<>();
         int n_tasks = 10;
+
+        JSONObject task = new JSONObject();
+        for(int i = 0; i < n_tasks; i++) {
+            task.put("maxVal", 50);
+            task.put("num", 500 + i);
+            task.put("seed", 72 + i);
+
+            tasks.add(task.toString());
+        }
+
+        return tasks;
+    }
+
+    // make 5 task job
+    private Collection<String> makeJob5(){
+        LinkedList<String> tasks = new LinkedList<>();
+        int n_tasks = 5;
 
         JSONObject task = new JSONObject();
         for(int i = 0; i < n_tasks; i++) {
